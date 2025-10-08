@@ -4,10 +4,11 @@ import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CitizenDashboard from "./pages/CitizenDashboard";
 import ComplaintDetail from "./pages/ComplaintDetail";
+import StaffDashboard from "./pages/StaffDashboard";
 
 // 🧠 Simple Dashboard Components
 const AdminDashboard = () => <h1>Admin Dashboard</h1>;
-const StaffDashboard = () => <h1>Staff Dashboard</h1>;
+// const StaffDashboard = () => <h1>Staff Dashboard</h1>;
 
 function App() {
   return (
@@ -48,6 +49,15 @@ function App() {
         <Route
           path="/complaint/:id"
           element={<ComplaintDetail />}
+        />
+
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute role="staff">
+              <StaffDashboard />
+            </ProtectedRoute>
+          }
         />
 
         {/* 🔁 Default Redirect */}
