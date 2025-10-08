@@ -1,121 +1,98 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from "react";
+import axios from "axios";
+import Home from "./pages/Home";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState({
+    lat: "",
+    lng: ""
+  });
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+  const [showHome, setShowHome] = useState(false); // ✅ toggle UI
+
+  const handleImage = (e) => {
+    setImage(e.target.files[0]);
+    setPreview(URL.createObjectURL(e.target.files[0]));
+  };
+
+  const getLocation = () => {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setLocation({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+      });
+    });
+  };
+
+  const submitComplaint = async () => {
+    const formData = new FormData();
+    formData.append("image", image);
+    formData.append("location", JSON.stringify(location));
+    formData.append("userDescription", description);
+
+    console.log("Sending:", location);
+    console.log("Image:", image);
+
+    const res = await axios.post(
+      "http://localhost:5000/api/complaints",
+      formData
+    );
+
+    alert("Complaint Submitted!");
+    console.log(res.data);
+  };
+
+  // ✅ If Home is enabled → show new UI
+  if (showHome) {
+    return (
+      <div>
         <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={() => setShowHome(false)}
+          style={{ margin: 20 }}
         >
-          Count is {count}
+          ← Back to Basic Form
         </button>
-      </section>
 
-      <div className="ticks"></div>
+        <Home />
+      </div>
+    );
+  }
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  // ✅ Your ORIGINAL UI (unchanged)
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Report Issue (Basic Form)</h2>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <button
+        onClick={() => setShowHome(true)}
+        style={{ marginBottom: 20 }}
+      >
+        Switch to Smart AI UI 🚀
+      </button>
+
+      <input type="file" onChange={handleImage} />
+      {preview && <img src={preview} width="200" alt="" />}
+
+      <br /><br />
+
+      <button onClick={getLocation}>Get Location</button>
+
+      <br /><br />
+
+      <textarea
+        placeholder="Edit AI description here..."
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={submitComplaint}>Submit</button>
+    </div>
+  );
 }
 
-export default App
+export default App;
