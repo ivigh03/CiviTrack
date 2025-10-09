@@ -1,15 +1,15 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-
+import http from "http";
+import { Server } from "socket.io";
 import connectDB from "./config/db.js";
-import complaintRoutes from "./routes/complaintRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
-// 🔐 Load env variables
+
+// 🔥 Load env
 dotenv.config();
 
-// 🔥 Connect Database (ONLY ONCE)
+// 🔥 Connect DB
 connectDB();
 
 const app = express();
@@ -28,9 +28,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // 📌 Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/complaints", complaintRoutes);
 
 // 🧪 Health Check Route
+// 🔥 Middlewares
+
+
+// 🔥 Test route
 app.get("/", (req, res) => {
   res.send("✅ CiviTrack API Running...");
 });

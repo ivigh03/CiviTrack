@@ -17,13 +17,26 @@ const complaintSchema = new mongoose.Schema(
     category: String,
     severity: String,
 
+    // 📌 Priority (NEW 🔥)
+    priority: {
+      type: String,
+      enum: ["low", "medium", "high"],
+      default: "medium",
+    },
+
     // 🧾 Title (for search/filter)
     title: String,
 
     // 👤 User who posted
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // assumes you’ll have a User model
+      ref: "User",
+    },
+
+    // 👨‍🔧 Assigned Staff (NEW 🔥)
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
 
     // 👍 Voting system
@@ -36,7 +49,6 @@ const complaintSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // (optional but better) track who voted
     votedUsers: [
       {
         user: {
@@ -56,6 +68,24 @@ const complaintSchema = new mongoose.Schema(
       enum: ["pending", "in-progress", "resolved", "rejected"],
       default: "pending",
     },
+
+    // 🔥 SLA & ESCALATION SYSTEM
+
+    // ⏱ SLA deadline (NEW)
+    slaDeadline: Date,
+
+    // ⚠ Escalation flag (NEW)
+    escalated: {
+      type: Boolean,
+      default: false,
+    },
+
+    // 📝 Admin remarks (NEW)
+    adminRemarks: String,
+
+    // 🕒 Tracking timestamps (NEW)
+    startedAt: Date,
+    resolvedAt: Date,
   },
   { timestamps: true }
 );
