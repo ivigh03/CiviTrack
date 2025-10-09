@@ -7,8 +7,6 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-console.log("KEY CHECK:", process.env.GEMINI_API_KEY);
-
 export const analyzeImage = async (imagePath) => {
   try {
     const imageBuffer = fs.readFileSync(imagePath);

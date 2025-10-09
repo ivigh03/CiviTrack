@@ -1,29 +1,53 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv"; 
+import dotenv from "dotenv";
+
+import connectDB from "./config/db.js";
+import complaintRoutes from "./routes/complaintRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+
+// 🔐 Load env variables
 dotenv.config();
 
-import complaintRoutes from "./routes/complaintRoutes.js";
-
-
+// 🔥 Connect Database (ONLY ONCE)
+connectDB();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// 🌐 CORS (frontend connection)
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Vite frontend
+    credentials: true,
+  })
+);
+
+// 📦 Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
-
-// Routes
+// 📌 Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
 
-// Server
-const PORT = process.env.PORT || 5000; // ✅ slight improvement
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+// 🧪 Health Check Route
+app.get("/", (req, res) => {
+  res.send("✅ CiviTrack API Running...");
+});
+
+// ❌ Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("ERROR:", err.message);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Server Error",
+  });
+});
+
+// 🚀 Start Server (ONLY ONCE)
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

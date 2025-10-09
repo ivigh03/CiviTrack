@@ -7,15 +7,36 @@ export const analyzeComplaintImage = async (req, res) => {
 
     const aiResult = await analyzeImage(filePath);
 
-    // delete image after processing
+    // 🧹 delete temp image
     fs.unlinkSync(filePath);
 
     let parsed;
 
     try {
-      parsed = JSON.parse(aiResult);
-    } catch {
-      parsed = { description: aiResult }; // fallback
+      const clean = aiResult
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+      parsed = JSON.parse(clean);
+
+      // ✅ normalize all fields (important)
+      parsed = {
+        title: parsed.title || parsed.category || "General Issue",
+        category: parsed.category || "general",
+        description: parsed.description || "",
+        severity: parsed.severity || "medium",
+      };
+
+    } catch (err) {
+      console.error("Parsing failed:", err);
+
+      parsed = {
+        title: "General Issue",
+        category: "general",
+        description: aiResult,
+        severity: "medium",
+      };
     }
 
     res.json({
@@ -24,6 +45,8 @@ export const analyzeComplaintImage = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("AI ERROR:", error);
+
     res.status(500).json({
       success: false,
       message: "Image analysis failed",

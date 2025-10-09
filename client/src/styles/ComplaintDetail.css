@@ -1,0 +1,107 @@
+/* 🌌 Background */
+.detail-container {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #1f1c2c, #0f0c29);
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    color: white;
+}
+
+/* 💎 Card */
+.detail-card {
+    width: 800px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* 🔥 Header */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 📄 Description */
+.desc {
+    margin: 20px 0;
+    opacity: 0.9;
+}
+
+/* 📊 Meta */
+.meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* 🖼 Images */
+.image-grid {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.image-grid img {
+    width: 150px;
+    border-radius: 10px;
+}
+
+/* 👍 Votes */
+.votes {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.upvote,
+.downvote {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.upvote {
+    background: #00c853;
+}
+
+.downvote {
+    background: #ff4d4d;
+}
+
+/* 💬 Comments */
+.comments {
+    margin-top: 20px;
+}
+
+.comment {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+}
+
+.comment-input {
+    display: flex;
+    gap: 10px;
+}
+
+.comment-input input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+.comment-input button {
+    padding: 10px;
+    border-radius: 8px;
+    background: #667eea;
+    color: white;
+    border: none;
+}
