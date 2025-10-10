@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children, role }) {
   const { user } = useSelector((state) => state.auth);
-
+  console.log("USER:", user); // ✅ ADD THIS
   if (!user) return <Navigate to="/login" />;
 
   if (role && user.user.role !== role) {

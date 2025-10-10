@@ -1,4 +1,4 @@
-import axios from "../../services/axios";
+import axios from "../../api/axios";
 
 export const fetchComplaintsAPI = () =>
   axios.get("/admin/complaints");
