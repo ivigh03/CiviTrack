@@ -4,39 +4,35 @@ const complaintSchema = new mongoose.Schema(
   {
     image: String,
 
-    // 📍 Location
     location: {
       lat: Number,
       lng: Number,
     },
     address: String,
 
-    // 🧠 AI + User Data
     aiDescription: String,
     userDescription: String,
     category: String,
     severity: String,
-
-    // 🧾 Title (for search/filter)
     title: String,
 
-    // 👤 User who posted
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // assumes you’ll have a User model
+      ref: "User",
     },
 
-    // 👍 Voting system
-    upvotes: {
-      type: Number,
-      default: 0,
-    },
-    downvotes: {
-      type: Number,
-      default: 0,
+    // ✅ ADD THIS (CRITICAL)
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
 
-    // (optional but better) track who voted
+    // ✅ PROOF IMAGE (for later)
+    proofImage: String,
+
+    upvotes: { type: Number, default: 0 },
+    downvotes: { type: Number, default: 0 },
+
     votedUsers: [
       {
         user: {
@@ -50,10 +46,9 @@ const complaintSchema = new mongoose.Schema(
       },
     ],
 
-    // 📌 Status tracking
     status: {
       type: String,
-      enum: ["pending", "in-progress", "resolved", "rejected"],
+      enum: ["pending", "assigned", "in-progress", "resolved", "rejected"],
       default: "pending",
     },
   },

@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React from "react";
 import "leaflet/dist/leaflet.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -11,10 +10,9 @@ import ComplaintDetail from "./pages/ComplaintDetail";
 import StaffDashboard from "./pages/StaffDashboard";
 import ComplaintForm from "./pages/ComplaintForm";
 
-// 🧠 Simple Admin Dashboard
+// 🧠 Admin Dashboard
 const AdminDashboard = () => <h1>Admin Dashboard</h1>;
 
-// ✅ MAIN APP (Single Entry Point)
 function App() {
   return (
     <BrowserRouter>
@@ -23,7 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* 🏠 Complaint Form (default landing after login ideally) */}
+        {/* 📝 Complaint Form */}
         <Route path="/complaintForm" element={<ComplaintForm />} />
 
         {/* 🔐 Protected */}
@@ -54,9 +52,10 @@ function App() {
           }
         />
 
+        {/* 🔥 DETAIL PAGE */}
         <Route path="/complaint/:id" element={<ComplaintDetail />} />
 
-        {/* 🔁 Fallback */}
+        {/* 🔁 Default */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
