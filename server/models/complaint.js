@@ -14,9 +14,24 @@ const complaintSchema = new mongoose.Schema(
     userDescription: String,
     category: String,
     severity: String,
+
+    // 📌 Priority (NEW 🔥)
+    priority: {
+      type: String,
+      enum: ["low", "medium", "high"],
+      default: "medium",
+    },
+
+    // 🧾 Title (for search/filter)
     title: String,
 
     user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    // 👨‍🔧 Assigned Staff (NEW 🔥)
+    assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
@@ -49,8 +64,27 @@ const complaintSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "assigned", "in-progress", "resolved", "rejected"],
+      enum: ["pending", "in-progress", "resolved", "rejected","escalated"],
       default: "pending",
     },
+
+    // 🔥 SLA & ESCALATION SYSTEM
+
+    // ⏱ SLA deadline (NEW)
+    slaDeadline: Date,
+
+    // ⚠ Escalation flag (NEW)
+    escalated: {
+      type: Boolean,
+      default: false,
+    },
+
+    // 📝 Admin remarks (NEW)
+    adminRemarks: String,
+
+    // 🕒 Tracking timestamps (NEW)
+    startedAt: Date,
+    resolvedAt: Date,
   },
   { timestamps: true }
 );
