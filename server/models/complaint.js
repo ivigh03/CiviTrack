@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const complaintSchema = new mongoose.Schema(
   {
+    // 📷 Original complaint image
     image: String,
 
     // 📍 Location
@@ -9,52 +10,66 @@ const complaintSchema = new mongoose.Schema(
       lat: Number,
       lng: Number,
     },
+
     address: String,
 
     // 🧠 AI + User Data
     aiDescription: String,
     userDescription: String,
+
+    // 📂 Category
     category: String,
+
+    // 🚨 Severity
     severity: String,
 
-    // 📌 Priority (NEW 🔥)
+    // 🎯 Priority
     priority: {
       type: String,
       enum: ["low", "medium", "high"],
       default: "medium",
     },
 
-    // 🧾 Title (for search/filter)
+    // 🧾 Complaint title
     title: String,
 
-    // 👤 User who posted
+    // 👤 Complaint creator
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
 
-    // 👨‍🔧 Assigned Staff (NEW 🔥)
+    // 👨‍🔧 Assigned staff
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
+    // ✅ Staff uploaded proof image
+    proofImage: String,
+
+    // ✅ Staff remark after completion
+    staffRemark: String,
 
     // 👍 Voting system
     upvotes: {
       type: Number,
       default: 0,
     },
+
     downvotes: {
       type: Number,
       default: 0,
     },
 
+    // 👥 Track voted users
     votedUsers: [
       {
         user: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
+
         vote: {
           type: String,
           enum: ["upvote", "downvote"],
@@ -62,32 +77,42 @@ const complaintSchema = new mongoose.Schema(
       },
     ],
 
-    // 📌 Status tracking
+    // 📌 Complaint status
     status: {
       type: String,
-      enum: ["pending", "in-progress", "resolved", "rejected","escalated"],
+      enum: [
+        "pending",
+        "assigned",
+        "in-progress",
+        "resolved",
+        "rejected",
+        "escalated",
+      ],
       default: "pending",
     },
 
-    // 🔥 SLA & ESCALATION SYSTEM
-
-    // ⏱ SLA deadline (NEW)
+    // ⏱ SLA deadline
     slaDeadline: Date,
 
-    // ⚠ Escalation flag (NEW)
+    // ⚠ Escalation flag
     escalated: {
       type: Boolean,
       default: false,
     },
 
-    // 📝 Admin remarks (NEW)
+    // 📝 Admin remarks
     adminRemarks: String,
 
-    // 🕒 Tracking timestamps (NEW)
+    // 🕒 Tracking timestamps
     startedAt: Date,
     resolvedAt: Date,
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export default mongoose.model("Complaint", complaintSchema);
+export default mongoose.model(
+  "Complaint",
+  complaintSchema
+);
