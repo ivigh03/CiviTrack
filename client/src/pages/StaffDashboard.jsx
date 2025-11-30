@@ -12,10 +12,10 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true);
 
   const { user } = useSelector((state) => state.auth);
-  console.log(user);
+  const loggedInUserId = user?.user?.id;
+
   
-  
-  
+   
 
   const [notifications] = useState([
     "New complaint assigned",
@@ -30,12 +30,14 @@ export default function StaffDashboard() {
       console.error("Error fetching complaints:", err);
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   useEffect(() => {
-  fetchData();
-}, []);
+  if (user) {
+    fetchData();
+  }
+}, [user]);
 
 useEffect(() => {
   console.log("FULL COMPLAINTS DATA:", complaints);
@@ -44,19 +46,16 @@ useEffect(() => {
   // ✅🔥 FINAL FIXED FILTER (ObjectId safe)
   const activeComplaints = complaints
   .filter((c) => {
-    if (!c.assignedTo || !user?._id) return false;
+    if (!c.assignedTo || !loggedInUserId) return false;
 
-    // 🔥 FORCE STRING CONVERSION (THIS FIXES IT)
-    const assignedId = String(
-      c.assignedTo._id || c.assignedTo
-    );
+    const assignedId =
+      typeof c.assignedTo === "object"
+        ? c.assignedTo._id
+        : c.assignedTo;
 
-    const userId = String(user._id);
-
-    return assignedId === userId;
+    return String(assignedId) === String(loggedInUserId);
   })
   .filter((c) => c.status !== "resolved");
-
   return (
     <div className="staff-container">
       {/* 🧭 Navbar */}
@@ -95,3 +94,5 @@ useEffect(() => {
     </div>
   );
 }
+
+
