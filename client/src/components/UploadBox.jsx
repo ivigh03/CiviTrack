@@ -1,21 +1,49 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function UploadBox({ setResult }) {
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
+export default function UploadBox({
+  setResult,
+  onImageSelect,
+}) {
 
+  const [file, setFile] = useState(null);
+
+  const [preview, setPreview] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  // 📸 Handle File
   const handleFile = (f) => {
+    if (!f) return;
+
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+
+    setPreview(
+      URL.createObjectURL(f)
+    );
+
+    // 🔥 send image to parent
+    if (onImageSelect) {
+      onImageSelect(f);
+    }
   };
 
+  // 🧠 AI Analyze
   const handleUpload = async () => {
-    if (!file) return alert("Upload image first");
+    if (!file) {
+      return alert(
+        "Upload image first"
+      );
+    }
 
     const formData = new FormData();
-    formData.append("image", file);
+
+    formData.append(
+      "image",
+      file
+    );
 
     try {
       setLoading(true);
@@ -27,37 +55,54 @@ export default function UploadBox({ setResult }) {
 
       setResult({
         ...res.data.data,
-        file: file
-    });
+        file,
+      });
+
     } catch (err) {
-      alert("Error analyzing image");
+      console.error(err);
+
+      alert(
+        "Error analyzing image"
+      );
+
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="card" style={{ textAlign: "center" }}>
-      <h2>Upload Issue Image</h2>
+    <div className="upload-box">
 
+      {/* FILE INPUT */}
       <input
         type="file"
-        onChange={(e) => handleFile(e.target.files[0])}
+        accept="image/*"
+        onChange={(e) =>
+          handleFile(
+            e.target.files[0]
+          )
+        }
       />
 
+      {/* PREVIEW */}
       {preview && (
         <img
           src={preview}
           alt="preview"
-          style={{ width: "100%", marginTop: 15, borderRadius: 10 }}
+          className="preview-image"
         />
       )}
 
-      <br /><br />
-
-      <button onClick={handleUpload}>
-        {loading ? "Analyzing..." : "Analyze Image"}
+      {/* ANALYZE BUTTON */}
+      <button
+        className="analyze-btn"
+        onClick={handleUpload}
+      >
+        {loading
+          ? "Analyzing..."
+          : "Analyze Image"}
       </button>
+
     </div>
   );
 }
