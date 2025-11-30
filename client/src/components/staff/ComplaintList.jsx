@@ -1,26 +1,100 @@
 import { useState } from "react";
+
 import ComplaintCard from "./ComplaintCard";
 import ProofUploadModal from "./ProofUploadModal";
 
-export default function ComplaintList({ complaints, setComplaints }) {
+import {
+  completeComplaint,
+} from "../../api/complaintApi";
+
+export default function ComplaintList({
+  complaints,
+  setComplaints,
+}) {
   const [selected, setSelected] = useState(null);
 
+  // 🔥 HANDLE BUTTON ACTION
   const handleAction = (complaint) => {
+    // assigned → start work
     if (complaint.status === "assigned") {
-      updateStatus(complaint._id, "in-progress");
-    } else if (complaint.status === "in-progress") {
-      setSelected(complaint); // 🔥 open modal
+      updateLocalStatus(
+        complaint._id,
+        "in-progress"
+      );
+    }
+
+    // in-progress → open proof modal
+    else if (
+      complaint.status === "in-progress"
+    ) {
+      setSelected(complaint);
     }
   };
 
-  const updateStatus = (id, newStatus, proof = {}) => {
-    const updated = complaints.map((c) =>
-      c._id === id
-        ? { ...c, status: newStatus, proof }
-        : c
+  // 🔥 LOCAL UI UPDATE
+  const updateLocalStatus = (
+    id,
+    newStatus
+  ) => {
+    setComplaints((prev) =>
+      prev.map((c) =>
+        c._id === id
+          ? { ...c, status: newStatus }
+          : c
+      )
     );
+  };
 
-    setComplaints(updated);
+  // 🔥 FINAL SUBMIT
+  const handleSubmitProof = async (
+    id,
+    proof
+  ) => {
+    try {
+      const formData = new FormData();
+
+      // ✅ proof image
+      if (proof.image) {
+        formData.append(
+          "proofImage",
+          proof.image
+        );
+      }
+
+      // ✅ remark
+      formData.append(
+        "remark",
+        proof.remark || ""
+      );
+
+      // ✅ backend update
+      await completeComplaint(
+        id,
+        formData
+      );
+
+      // ✅ frontend update
+      setComplaints((prev) =>
+        prev.map((c) =>
+          c._id === id
+            ? {
+                ...c,
+                status: "resolved",
+                proof,
+              }
+            : c
+        )
+      );
+
+      // ✅ close modal
+      setSelected(null);
+
+    } catch (err) {
+      console.error(
+        "COMPLETE ERROR:",
+        err
+      );
+    }
   };
 
   return (
@@ -35,14 +109,14 @@ export default function ComplaintList({ complaints, setComplaints }) {
         ))}
       </div>
 
-      {/* 🔥 MODAL */}
+      {/* 🔥 PROOF MODAL */}
       {selected && (
         <ProofUploadModal
           complaint={selected}
-          onClose={() => setSelected(null)}
-          onSubmit={(id, proof) =>
-            updateStatus(id, "completed", proof)
+          onClose={() =>
+            setSelected(null)
           }
+          onSubmit={handleSubmitProof}
         />
       )}
     </>
