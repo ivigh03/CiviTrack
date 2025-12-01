@@ -50,7 +50,11 @@ router.get("/complaints", getComplaints);
 
 router.put("/complaints/:id", updateStatus);
 
-router.put("/assign/:id", assignStaff);
+router.put(
+  "/assign/:id",
+  protect,
+  assignStaff
+);
 
 router.put("/users/:id/role", updateUserRole);
 

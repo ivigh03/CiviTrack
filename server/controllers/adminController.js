@@ -195,47 +195,92 @@ export const markNotificationRead = async (req, res) => {
 
 // 👤 Assign staff
 export const assignStaff = async (req, res) => {
-  try {
-    const { staffId } = req.body;
-    console.log("ASSIGN API HIT");
-    console.log("Staff ID:", staffId);
-    if (!staffId) {
-      return res.status(400).json({ message: "Staff ID required" });
-    }
+try {
+const { staffId } = req.body;
 
-   const updated = await Complaint.findByIdAndUpdate(
-  req.params.id,
-  { assignedTo: staffId, status: "in-progress" },
-  { returnDocument: "after" }
+if (!staffId) {
+  return res.status(400).json({
+    message: "Staff ID required",
+  });
+}
+
+const complaint = await Complaint.findById(
+  req.params.id
 );
 
-const populated = await Complaint.findById(updated._id)
-  .populate("assignedTo");
+if (!complaint) {
+  return res.status(404).json({
+    message: "Complaint not found",
+  });
+}
 
+// Check if first assignment or reassignment
+const action = complaint.assignedTo
+  ? "reassigned"
+  : "assigned";
 
-    if (!updated) {
-      return res.status(404).json({ message: "Complaint not found" });
-    }
+// Update complaint
+complaint.assignedTo = staffId;
+complaint.status = "in-progress";
 
-    const notification = {
-      message: `Complaint assigned to you`,
-      type: "assignment",
-      complaint: updated._id,
-      user: staffId,
-    };
+// Save assignment history
+complaint.assignmentHistory.push({
+  assignedTo: staffId,
+  assignedBy: req.user?._id || null,
+  action,
+  assignedAt: new Date(),
+});
 
-    await createNotification(notification);
-    console.log("🚀 EMITTING:", notification);
-    getIO()
+await complaint.save();
+
+// Track complaint in staff profile
+await User.findByIdAndUpdate(
+  staffId,
+  {
+    $addToSet: {
+      assignedComplaints: complaint._id,
+    },
+  }
+);
+
+const populated = await Complaint.findById(
+  complaint._id
+)
+  .populate("assignedTo")
+  .populate("assignmentHistory.assignedTo")
+  .populate("assignmentHistory.assignedBy");
+
+// Notification
+const notification = {
+  message:
+    action === "assigned"
+      ? "Complaint assigned to you"
+      : "Complaint reassigned to you",
+
+  type: "assignment",
+  complaint: complaint._id,
+  user: staffId,
+};
+
+await createNotification(notification);
+
+getIO()
   .to(staffId.toString())
   .emit("newNotification", notification);
-    console.log("Notification created");
-    res.json(populated);
 
-  } catch (err) {
-    console.error("ASSIGN STAFF ERROR:", err);
-    res.status(500).json({ message: err.message });
-  }
+res.json(populated);
+
+} catch (err) {
+  console.error("========== ASSIGN STAFF ERROR ==========");
+  console.error(err);
+  console.error(err.stack);
+  console.error("=======================================");
+
+  res.status(500).json({
+    message: err.message,
+    stack: err.stack,
+  });
+}
 };
 
 

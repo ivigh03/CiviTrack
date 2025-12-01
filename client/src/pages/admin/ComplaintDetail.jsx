@@ -65,11 +65,15 @@ const ComplaintDetail = () => {
 };
 
   const assignStaff = async (staffId) => {
-  console.log("CLICKED ASSIGN", staffId);
-
   try {
-    const res = await axios.put(`/admin/assign/${id}`, { staffId });
-    console.log("API RESPONSE:", res.data);
+    const res = await axios.put(
+      `/admin/assign/${id}`,
+      { staffId }
+    );
+
+    setComplaint(res.data);
+    setShowAssign(false);
+
   } catch (err) {
     console.error("ASSIGN ERROR:", err);
   }
@@ -180,6 +184,49 @@ const ComplaintDetail = () => {
           Assign / Reassign Staff
         </button>
       </div>
+      {/* ASSIGNMENT HISTORY */}
+<div className="bg-[#1e293b] p-6 rounded-xl mt-6">
+  <h3 className="font-bold text-lg mb-4">
+    Assignment History
+  </h3>
+
+  {!complaint.assignmentHistory ||
+  complaint.assignmentHistory.length === 0 ? (
+    <p className="text-gray-400">
+      No assignment history
+    </p>
+  ) : (
+    <div className="space-y-4">
+      {complaint.assignmentHistory.map(
+        (item, index) => (
+          <div
+            key={index}
+            className="border-l-4 border-blue-500 pl-4"
+          >
+            <p className="font-semibold">
+              {item.action === "assigned"
+                ? "📌 Assigned"
+                : "🔄 Reassigned"}
+            </p>
+
+            <p>
+              Staff:
+              {" "}
+              {item.assignedTo?.name ||
+                "Unknown"}
+            </p>
+
+            <p className="text-sm text-gray-400">
+              {new Date(
+                item.assignedAt
+              ).toLocaleString()}
+            </p>
+          </div>
+        )
+      )}
+    </div>
+  )}
+</div>
 
       {/* ASSIGN PANEL */}
       {showAssign && (
