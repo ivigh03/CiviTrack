@@ -31,44 +31,80 @@ export default function UploadBox({
   };
 
   // 🧠 AI Analyze
-  const handleUpload = async () => {
-    if (!file) {
-      return alert(
-        "Upload image first"
-      );
-    }
+const handleUpload = async () => {
 
-    const formData = new FormData();
+  if (!file) {
+    return alert(
+      "Upload image first"
+    );
+  }
 
-    formData.append(
-      "image",
-      file
+  const formData =
+    new FormData();
+
+  formData.append(
+    "image",
+    file
+  );
+
+  try {
+
+    setLoading(true);
+
+    // ✅ GET USER OBJECT
+    const userData = JSON.parse(
+      localStorage.getItem("user")
     );
 
-    try {
-      setLoading(true);
+    // ✅ GET TOKEN
+    const token =
+      userData?.token;
 
-      const res = await axios.post(
-        "http://localhost:5000/api/complaints/analyze",
-        formData
-      );
+    console.log(
+      "TOKEN:",
+      token
+    );
 
-      setResult({
-        ...res.data.data,
-        file,
-      });
+    const res = await axios.post(
+      "http://localhost:5000/api/complaints/analyze",
 
-    } catch (err) {
-      console.error(err);
+      formData,
 
-      alert(
-        "Error analyzing image"
-      );
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
 
-    } finally {
-      setLoading(false);
-    }
-  };
+          "Content-Type":
+            "multipart/form-data",
+        },
+      }
+    );
+
+    setResult({
+      ...res.data.data,
+      file,
+    });
+
+  } catch (err) {
+
+    console.error(
+      "UPLOAD ERROR:",
+      err.response?.data ||
+      err.message
+    );
+
+    alert(
+      err.response?.data?.message ||
+      "Error analyzing image"
+    );
+
+  } finally {
+
+    setLoading(false);
+
+  }
+};
 
   return (
     <div className="upload-box">

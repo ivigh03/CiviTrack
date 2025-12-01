@@ -7,16 +7,42 @@ import { getIO } from "../socket.js";
 import Notification from "../models/Notification.js";
 
 export const analyzeComplaintImage = async (req, res) => {
+
   try {
+
+    // ✅ FILE CHECK
+    if (!req.file) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Image file missing",
+      });
+    }
+
+    // ✅ USER CHECK
+    if (!req.user) {
+
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
+
     const filePath = req.file.path;
 
-    const aiResult = await analyzeImage(filePath);
+    console.log("FILE PATH:", filePath);
 
+    // ✅ AI ANALYSIS
+    const aiResult =
+      await analyzeImage(filePath);
+
+    // ✅ DELETE TEMP FILE
     fs.unlinkSync(filePath);
 
     let parsed;
 
     try {
+
       const clean = aiResult
         .replace(/```json/g, "")
         .replace(/```/g, "")
@@ -25,63 +51,126 @@ export const analyzeComplaintImage = async (req, res) => {
       parsed = JSON.parse(clean);
 
       parsed = {
-        title: parsed.title || parsed.category || "General Issue",
-        category: parsed.category || "general",
-        description: parsed.description || "",
-        severity: parsed.severity || "medium",
+        title:
+          parsed.title ||
+          parsed.category ||
+          "General Issue",
+
+        category:
+          parsed.category ||
+          "general",
+
+        description:
+          parsed.description || "",
+
+        severity:
+          parsed.severity ||
+          "medium",
       };
+
     } catch (err) {
+
       parsed = {
         title: "General Issue",
+
         category: "general",
+
         description: aiResult,
+
         severity: "medium",
       };
     }
 
-    // 🚀 CREATE COMPLAINT (IMPORTANT)
-    const complaint = await Complaint.create({
-      title: parsed.title,
-      category: parsed.category,
-      userDescription: parsed.description,
-      severity: parsed.severity,
-      image: req.file?.path || "", // optional
-      address: req.body.address,
-      user: req.user?._id || null,
-      status: "pending",
-    });
+    // ✅ CREATE COMPLAINT
+    const complaint =
+      await Complaint.create({
 
-    // 🔥 NOTIFY ADMINS
-    const admins = await User.find({ role: "admin" });
+        title:
+          parsed.title,
+
+        category:
+          parsed.category,
+
+        userDescription:
+          parsed.description,
+
+        severity:
+          parsed.severity,
+
+        image:
+          `/uploads/${req.file.filename}`,
+
+        address:
+          req.body.address || "Unknown Address",
+
+        user:
+          req.user._id,
+
+        status:
+          "pending",
+      });
+
+    // ✅ NOTIFY ADMINS
+    const admins =
+      await User.find({
+        role: "admin",
+      });
 
     for (const admin of admins) {
+
       const notification = {
-        message: `New complaint at ${complaint.address}`,
-        type: "complaint",
-        complaint: complaint._id,
-        user: admin._id,
+
+        message:
+          `New complaint at ${complaint.address}`,
+
+        type:
+          "complaint",
+
+        complaint:
+          complaint._id,
+
+        user:
+          admin._id,
       };
 
-      await createNotification(notification);
+      await createNotification(
+        notification
+      );
 
-      // 🔥 REAL-TIME SOCKET
-     getIO()
-  .to(admin._id.toString())
-  .emit("newNotification", notification);
+      // ✅ REALTIME SOCKET
+      getIO()
+        .to(admin._id.toString())
+        .emit(
+          "newNotification",
+          notification
+        );
     }
 
     res.json({
+
       success: true,
+
       data: parsed,
+
       complaint,
     });
 
   } catch (error) {
-    console.error("AI ERROR:", error);
+
+    console.error(
+      "AI ERROR:",
+      error.message
+    );
+
+    console.error(error);
 
     res.status(500).json({
+
       success: false,
-      message: "Image analysis failed",
+
+      message:
+        error.message ||
+        "Image analysis failed",
     });
   }
 };
