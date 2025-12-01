@@ -15,9 +15,9 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
     },
 
+    // Optional — null for Google-only accounts
     password: {
       type: String,
-      required: true,
       minlength: 6,
       select: false,
     },
@@ -28,28 +28,29 @@ const userSchema = new mongoose.Schema(
       default: "citizen",
     },
 
-    // 🔥 NEW FIELDS START HERE
+    // ── Google OAuth ──────────────────────────────
+    googleId: {
+      type: String,
+      default: null,
+    },
 
-    // 📞 Contact
+    // ── Profile ───────────────────────────────────
     phone: String,
 
-    // 🖼 Profile image
     avatar: String,
 
-    // 🧑‍🔧 Staff specialization
+    // ── Staff fields ──────────────────────────────
     specialization: {
       type: String,
       enum: ["garbage", "water", "road", "electricity", "general"],
       default: "general",
     },
 
-    // 🟢 Staff availability
     isAvailable: {
       type: Boolean,
       default: true,
     },
 
-    // 📊 Track assigned complaints
     assignedComplaints: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -57,32 +58,29 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ⭐ Performance tracking (optional but powerful)
     resolvedCount: {
       type: Number,
       default: 0,
     },
 
-    // 🚫 Account control
     isBlocked: {
       type: Boolean,
       default: false,
     },
-
-    // 🔥 NEW FIELDS END
   },
   { timestamps: true }
 );
 
-// 🔐 Hash password
+// Hash password only when it is set/changed
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+  if (!this.isModified("password") || !this.password) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-// 🔑 Compare password
+// Compare password — returns false if no password set (Google-only)
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  if (!this.password) return false;
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
 export default mongoose.model("User", userSchema);

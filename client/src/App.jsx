@@ -143,7 +143,17 @@ function App() {
 
         {/* 🔁 Default */}
         {/* 🔁 Fallback */}
-        <Route path="*" element={<Navigate to="/login" />} />
+{/* HOME */}
+<Route
+  path="/"
+  element={<Navigate to="/login" />}
+/>
+
+{/* FALLBACK */}
+<Route
+  path="*"
+  element={<Navigate to="/" />}
+/>
 
       </Routes>
     </BrowserRouter>

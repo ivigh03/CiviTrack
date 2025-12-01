@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../features/auth/authSlice";
 
-export default function Navbar({ setActiveTab }) {
+export default function CitizenNavbar({ setActiveTab }) {
   const [collapsed, setCollapsed] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   return (
     <motion.div
@@ -17,7 +27,17 @@ export default function Navbar({ setActiveTab }) {
         {collapsed ? "👉" : "👈"}
       </button>
 
-      {!collapsed && <h2>CiviTrack</h2>}
+      {!collapsed && (
+        <div className="navbar-user-info">
+          {user?.avatar && (
+            <img src={user.avatar} alt={user.name} className="navbar-avatar" />
+          )}
+          <h2>CiviTrack</h2>
+          {user?.name && (
+            <p className="navbar-username">{user.name}</p>
+          )}
+        </div>
+      )}
 
       <button onClick={() => setActiveTab("home")}>
         🏠 {!collapsed && "Home"}
@@ -39,7 +59,7 @@ export default function Navbar({ setActiveTab }) {
         🔔 {!collapsed && "Notifications"}
       </button>
 
-      <button className="logout">
+      <button className="logout" onClick={handleLogout}>
         🚪 {!collapsed && "Logout"}
       </button>
     </motion.div>
