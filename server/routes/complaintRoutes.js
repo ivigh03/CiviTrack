@@ -4,6 +4,7 @@ import multer from "multer";
 import { analyzeComplaintImage } from "../controllers/complaintController.js";
 
 import Complaint from "../models/Complaint.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ const upload = multer({
 /* 🧠 AI ANALYZE */
 router.post(
   "/analyze",
+  protect,
   upload.single("image"),
   analyzeComplaintImage
 );

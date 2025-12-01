@@ -26,7 +26,7 @@ const authData = useSelector(
 );
 
 const user =
-  authData?.user;
+  authData?.user?.user;
 
   const [image, setImage] =
     useState(null);
@@ -137,130 +137,145 @@ const user =
   // 📤 SUBMIT
   const submitComplaint = async () => {
 
-    try {
+  try {
 
-      if (
-        !image ||
-        !title ||
-        !description ||
-        !address
-      ) {
-        alert(
-          "Please fill all required fields"
-        );
-
-        return;
-      }
-
-      setLoading(true);
-
-      const formData =
-        new FormData();
-
-      // ✅ IMAGE
-      formData.append(
-        "image",
-        image
-      );
-
-      // ✅ LOCATION
-      formData.append(
-        "location",
-        JSON.stringify(location)
-      );
-
-      // ✅ ADDRESS
-      formData.append(
-        "address",
-        address
-      );
-
-      // ✅ TITLE
-      formData.append(
-        "title",
-        title
-      );
-
-      // ✅ DESCRIPTION
-      formData.append(
-        "userDescription",
-        description
-      );
-
-      // ✅ USER ID (CRITICAL FIX)
-console.log("AUTH:", authData);
-
-console.log("USER:", user);
-
-const userId =
-  user?.id ||
-  user?._id ||
-  user?.user?.id ||
-  user?.user?._id;
-
-console.log(
-  "FINAL USER ID:",
-  userId
-);
-
-// ✅ SAFETY CHECK
-if (!userId) {
-
-  alert(
-    "User not found. Please login again."
-  );
-
-  return;
-}
-
-// ✅ SEND USER ID
-formData.append(
-  "user",
-  String(userId)
-);
-
-      const res = await axios.post(
-        "http://localhost:5000/api/complaints",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-      console.log(
-        "Complaint Added:",
-        res.data
-      );
-
-      // ✅ REFRESH REDUX
-      dispatch(
-        fetchComplaints()
-      );
+    if (
+      !image ||
+      !title ||
+      !description ||
+      !address
+    ) {
 
       alert(
-        "Complaint Submitted!"
+        "Please fill all required fields"
       );
 
-      // ✅ REDIRECT
-      navigate("/citizen");
-
-    } catch (err) {
-
-      console.error(err);
-
-      alert(
-        "Error submitting complaint"
-      );
-
-    } finally {
-
-      setLoading(false);
-
+      return;
     }
-  };
+
+    setLoading(true);
+
+    const formData =
+      new FormData();
+
+    // ✅ IMAGE
+    formData.append(
+      "image",
+      image
+    );
+
+    // ✅ LOCATION
+    formData.append(
+      "location",
+      JSON.stringify(location)
+    );
+
+    // ✅ ADDRESS
+    formData.append(
+      "address",
+      address
+    );
+
+    // ✅ TITLE
+    formData.append(
+      "title",
+      title
+    );
+
+    // ✅ DESCRIPTION
+    formData.append(
+      "userDescription",
+      description
+    );
+
+    // ✅ GET USER ID
+    const userId =
+    user?.id ||
+    user?._id;
+
+
+    console.log(
+      "FINAL USER ID:",
+      userId
+    );
+
+    if (!userId) {
+
+      alert(
+        "User not found. Please login again."
+      );
+
+      return;
+    }
+
+    // ✅ SEND USER
+    formData.append(
+      "user",
+      String(userId)
+    );
+
+    // ✅ GET TOKEN
+    const token =
+    localStorage.getItem("token");
+
+    console.log("USER:", user);
+    console.log("USER ID:", userId);
+    console.log("TOKEN:", token);
+
+    // ✅ API CALL
+    const res = await axios.post(
+      "http://localhost:5000/api/complaints",
+
+      formData,
+
+      {
+        headers: {
+
+          Authorization:
+            `Bearer ${token}`,
+
+          "Content-Type":
+            "multipart/form-data",
+        },
+      }
+    );
+
+    console.log(
+      "Complaint Added:",
+      res.data
+    );
+
+    // ✅ REFRESH REDUX
+    await dispatch(
+      fetchComplaints()
+    );
+
+    alert(
+      "Complaint Submitted!"
+    );
+
+    // ✅ REDIRECT
+    navigate("/citizen");
+
+  } catch (err) {
+
+    console.error(
+      "SUBMIT ERROR:",
+      err.response?.data ||
+      err.message
+    );
+
+    alert(
+      err.response?.data?.message ||
+      "Error submitting complaint"
+    );
+
+  } finally {
+
+    setLoading(false);
+
+  }
+};
 
   return (
     <div className="complaint-form-container">

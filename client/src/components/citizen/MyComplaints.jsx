@@ -1,43 +1,55 @@
 import { useSelector } from "react-redux";
 
-import ComplaintList from "../dashboard/ComplaintList";
+import ComplaintList
+from "../dashboard/ComplaintList";
 
 export default function MyComplaints({
   complaints = [],
 }) {
 
-  // ✅ AUTH DATA
-  const authData = useSelector(
+  // ✅ FULL AUTH
+  const auth = useSelector(
     (state) => state.auth
   );
 
+  // ✅ ACTUAL USER
   const currentUser =
-    authData?.user;
+    auth?.user?.user;
 
-  // ✅ GET USER ID SAFELY
+  // ✅ USER ID
   const currentUserId =
     currentUser?.id ||
-    currentUser?._id ||
-    currentUser?.user?.id ||
-    currentUser?.user?._id;
+    currentUser?._id;
+
+  console.log(
+    "CURRENT USER:",
+    currentUser
+  );
+
+  console.log(
+    "CURRENT USER ID:",
+    currentUserId
+  );
 
   // ✅ FILTER USER COMPLAINTS
   const myComplaints =
     complaints.filter((c) => {
 
+      // complaint.user can be:
+      // ObjectId OR populated object
+
       const complaintUserId =
-        c.user?._id || c.user;
+        typeof c.user === "object"
+          ? c.user?._id
+          : c.user;
 
       return (
-        String(complaintUserId) ===
+        String(
+          complaintUserId
+        ) ===
         String(currentUserId)
       );
     });
-
-  console.log(
-    "CURRENT USER:",
-    currentUserId
-  );
 
   console.log(
     "MY COMPLAINTS:",
@@ -48,7 +60,8 @@ export default function MyComplaints({
     <>
       <h2>
         My Complaints (
-        {myComplaints.length})
+        {myComplaints.length}
+        )
       </h2>
 
       <ComplaintList
