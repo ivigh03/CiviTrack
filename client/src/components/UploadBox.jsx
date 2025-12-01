@@ -6,7 +6,8 @@ export default function UploadBox({
   onImageSelect,
 }) {
 
-  const [file, setFile] = useState(null);
+  const [file, setFile] =
+    useState(null);
 
   const [preview, setPreview] =
     useState(null);
@@ -14,8 +15,9 @@ export default function UploadBox({
   const [loading, setLoading] =
     useState(false);
 
-  // 📸 Handle File
+  // 📸 HANDLE FILE
   const handleFile = (f) => {
+
     if (!f) return;
 
     setFile(f);
@@ -24,92 +26,120 @@ export default function UploadBox({
       URL.createObjectURL(f)
     );
 
-    // 🔥 send image to parent
+    // 🔥 SEND TO PARENT
     if (onImageSelect) {
       onImageSelect(f);
     }
   };
 
-  // 🧠 AI Analyze
-const handleUpload = async () => {
+  // 🧠 AI ANALYZE
+  const handleUpload = async () => {
 
-  if (!file) {
-    return alert(
-      "Upload image first"
-    );
-  }
+    if (!file) {
 
-  const formData =
-    new FormData();
+      return alert(
+        "Upload image first"
+      );
+    }
 
-  formData.append(
-    "image",
-    file
-  );
+    const formData =
+      new FormData();
 
-  try {
-
-    setLoading(true);
-
-    // ✅ GET USER OBJECT
-    const userData = JSON.parse(
-      localStorage.getItem("user")
+    formData.append(
+      "image",
+      file
     );
 
-    // ✅ GET TOKEN
-    const token =
-      userData?.token;
+    try {
 
-    console.log(
-      "TOKEN:",
-      token
-    );
+      setLoading(true);
 
-    const res = await axios.post(
-      "http://localhost:5000/api/complaints/analyze",
+      // ✅ GET AUTH DATA
+      const authData =
+        JSON.parse(
+          localStorage.getItem(
+            "auth"
+          )
+        );
 
-      formData,
+      // ✅ GET TOKEN
+      const token =
+        authData?.token;
 
-      {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
+      console.log(
+        "TOKEN:",
+        token
+      );
 
-          "Content-Type":
-            "multipart/form-data",
-        },
+      // ❌ NO TOKEN
+      if (!token) {
+
+        alert(
+          "Please login again"
+        );
+
+        return;
       }
-    );
 
-    setResult({
-      ...res.data.data,
-      file,
-    });
+      // ✅ API CALL
+      const res =
+        await axios.post(
 
-  } catch (err) {
+          "http://localhost:5000/api/complaints/analyze",
 
-    console.error(
-      "UPLOAD ERROR:",
-      err.response?.data ||
-      err.message
-    );
+          formData,
 
-    alert(
-      err.response?.data?.message ||
-      "Error analyzing image"
-    );
+          {
+            headers: {
 
-  } finally {
+              Authorization:
+                `Bearer ${token}`,
 
-    setLoading(false);
+              "Content-Type":
+                "multipart/form-data",
+            },
+          }
+        );
 
-  }
-};
+      console.log(
+        "AI RESULT:",
+        res.data
+      );
+
+      // ✅ SAVE RESULT
+      setResult({
+        ...res.data.data,
+        file,
+      });
+
+    } catch (err) {
+
+      console.error(
+        "UPLOAD ERROR:",
+        err.response?.data ||
+        err.message
+      );
+
+      alert(
+
+        err.response?.data
+          ?.message ||
+
+        "Error analyzing image"
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
 
   return (
+
     <div className="upload-box">
 
-      {/* FILE INPUT */}
+      {/* 📂 FILE INPUT */}
       <input
         type="file"
         accept="image/*"
@@ -120,23 +150,27 @@ const handleUpload = async () => {
         }
       />
 
-      {/* PREVIEW */}
+      {/* 🖼️ PREVIEW */}
       {preview && (
+
         <img
           src={preview}
           alt="preview"
           className="preview-image"
         />
+
       )}
 
-      {/* ANALYZE BUTTON */}
+      {/* 🧠 BUTTON */}
       <button
         className="analyze-btn"
         onClick={handleUpload}
       >
+
         {loading
           ? "Analyzing..."
           : "Analyze Image"}
+
       </button>
 
     </div>
