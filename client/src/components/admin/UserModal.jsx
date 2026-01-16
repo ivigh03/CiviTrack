@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import axios from "../../api/axios";
 
 const UserModal = ({ user, onClose, refresh }) => {
@@ -16,9 +17,26 @@ const UserModal = ({ user, onClose, refresh }) => {
     onClose();
   };
 
+  const handleToggleBlock = async () => {
+    await axios.put(`/admin/users/${user._id}/block`);
+    refresh();
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white text-black rounded-xl p-6 w-[400px]">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white text-black rounded-xl p-6 w-[400px]"
+      >
 
         <h2 className="text-xl font-bold mb-4 text-black">User Details</h2>
 
@@ -53,11 +71,21 @@ const UserModal = ({ user, onClose, refresh }) => {
         {/* ACTIONS */}
         <div className="flex justify-between mt-6">
 
-          <button
-            onClick={handleDelete}
-            className="bg-red-500 text-white px-4 py-2 rounded">
-            Delete
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDelete}
+              className="bg-red-500 text-white px-4 py-2 rounded">
+              Delete
+            </button>
+
+            <button
+              onClick={handleToggleBlock}
+              className={`px-4 py-2 rounded text-white ${
+                user.isBlocked ? "bg-green-600" : "bg-yellow-600"
+              }`}>
+              {user.isBlocked ? "Unblock" : "Block"}
+            </button>
+          </div>
 
           <div className="flex gap-2">
             <button
@@ -74,8 +102,8 @@ const UserModal = ({ user, onClose, refresh }) => {
           </div>
         </div>
 
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -6,21 +6,24 @@ import {
   assignStaff,
   getUsers,
   deleteUser,
+  toggleUserBlock,
   updateUserRole,
   getComplaintById,
+  deleteComplaint,
+  exportComplaintsCSV,
   getNotifications,
   markAllNotificationsRead,
   clearNotifications,
   markNotificationRead,
 } from "../controllers/adminController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/users", getUsers);
+router.get("/users", protect, authorizeRoles("admin"), getUsers);
 
-router.get("/dashboard", getDashboard);
+router.get("/dashboard", protect, authorizeRoles("admin"), getDashboard);
 
 router.get(
   "/notifications",
@@ -46,20 +49,27 @@ router.delete(
   clearNotifications
 );
 
-router.get("/complaints", getComplaints);
+router.get("/complaints", protect, authorizeRoles("admin"), getComplaints);
 
-router.put("/complaints/:id", updateStatus);
+router.put("/complaints/:id", protect, authorizeRoles("admin"), updateStatus);
 
 router.put(
   "/assign/:id",
   protect,
+  authorizeRoles("admin"),
   assignStaff
 );
 
-router.put("/users/:id/role", updateUserRole);
+router.put("/users/:id/role", protect, authorizeRoles("admin"), updateUserRole);
 
-router.delete("/users/:id", deleteUser);
+router.put("/users/:id/block", protect, authorizeRoles("admin"), toggleUserBlock);
 
-router.get("/complaints/:id", getComplaintById);
+router.delete("/users/:id", protect, authorizeRoles("admin"), deleteUser);
+
+router.get("/complaints/export", protect, authorizeRoles("admin"), exportComplaintsCSV);
+
+router.delete("/complaints/:id", protect, authorizeRoles("admin"), deleteComplaint);
+
+router.get("/complaints/:id", protect, authorizeRoles("admin"), getComplaintById);
 
 export default router;

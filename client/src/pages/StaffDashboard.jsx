@@ -18,10 +18,6 @@ export default function StaffDashboard() {
   const [loading, setLoading] =
     useState(true);
 
-  const [notifications] = useState([
-    "New complaint assigned",
-  ]);
-
   // ✅ REDUX
   const { user } = useSelector(
     (state) => state.auth
@@ -206,11 +202,7 @@ export default function StaffDashboard() {
             />
 
             {/* 🔔 NOTIFICATIONS */}
-            <Notifications
-              notifications={
-                notifications
-              }
-            />
+            <Notifications />
 
             {/* 📋 WORK */}
             <h2

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import axios from "../../api/axios";
+import { useParams, useNavigate } from "react-router-dom";
+import axios, { UPLOADS_BASE_URL } from "../../api/axios";
 
 const ComplaintDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [complaint, setComplaint] = useState(null);
   const [staffList, setStaffList] = useState([]);
   const [showAssign, setShowAssign] = useState(false);
@@ -85,6 +86,17 @@ const ComplaintDetail = () => {
     });
     window.location.reload();
   };
+
+  const deleteComplaint = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to permanently delete this complaint?"
+    );
+
+    if (!confirmed) return;
+
+    await axios.delete(`/admin/complaints/${id}`);
+    navigate("/admin/complaints");
+  };
   const getPriorityColor = () => {
   if (complaint.priority === "high") return "bg-red-500";
   if (complaint.priority === "medium") return "bg-yellow-500";
@@ -115,13 +127,31 @@ const ComplaintDetail = () => {
   {complaint.priority?.toUpperCase()}
 </span>
 
-        <img
-          src={complaint.image}
-          alt=""
-          className="rounded-lg mb-4 w-full h-[300px] object-cover"
-        />
+        {complaint.image && (
+          <img
+            src={`${UPLOADS_BASE_URL}${complaint.image}`}
+            alt=""
+            className="rounded-lg mb-4 w-full h-[300px] object-cover"
+          />
+        )}
 
         <p>{complaint.userDescription}</p>
+
+        {(complaint.proofImage || complaint.staffRemark) && (
+          <div className="mt-4">
+            <p className="font-semibold mb-2">Resolution Proof:</p>
+            {complaint.proofImage && (
+              <img
+                src={`${UPLOADS_BASE_URL}${complaint.proofImage}`}
+                alt="Resolution proof"
+                className="rounded-lg w-full h-[300px] object-cover"
+              />
+            )}
+            {complaint.staffRemark && (
+              <p className="mt-2 text-gray-300">Staff remark: {complaint.staffRemark}</p>
+            )}
+          </div>
+        )}
       </div>
       <div className="mt-6">
   <h3 className="font-semibold mb-3">Progress Timeline</h3>
@@ -182,6 +212,13 @@ const ComplaintDetail = () => {
           className="bg-blue-500 w-full py-2 rounded mt-4"
         >
           Assign / Reassign Staff
+        </button>
+
+        <button
+          onClick={deleteComplaint}
+          className="bg-red-700 w-full py-2 rounded mt-4"
+        >
+          Delete Complaint
         </button>
       </div>
       {/* ASSIGNMENT HISTORY */}
