@@ -9,7 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 import CitizenDashboard from "./pages/CitizenDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
-import ComplaintDetail from "./pages/ComplaintDetail";
+import ComplaintDetailPublic from "./pages/ComplaintDetailPublic";
 import ComplaintForm from "./pages/ComplaintForm";
 
 
@@ -71,7 +71,14 @@ function App() {
         {/* 📝 Complaint Form */}
         {/* 📝 Complaint */}
         <Route path="/complaintForm" element={<ComplaintForm />} />
-        <Route path="/complaint/:id" element={<ComplaintDetail />} />
+        <Route
+          path="/complaint/:id"
+          element={
+            <ProtectedRoute>
+              <ComplaintDetailPublic />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 🔐 Admin Routes */}
         <Route

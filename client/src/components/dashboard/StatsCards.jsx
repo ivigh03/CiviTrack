@@ -6,7 +6,7 @@ export default function StatsCards({ complaints }) {
 
   const data = [
     { label: "Total", value: total },
-    { label: "Open", value: open },
+    { label: "Open", value: pending },
     { label: "In Progress", value: progress },
     { label: "Resolved", value: resolved },
   ];

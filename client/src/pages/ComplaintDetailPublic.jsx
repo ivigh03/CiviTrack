@@ -7,7 +7,7 @@ import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import { SkeletonCard } from "../components/ui/Skeleton";
 
-export default function ComplaintDetail() {
+export default function ComplaintDetailPublic() {
   const { id } = useParams();
   const [complaint, setComplaint] = useState(null);
 
