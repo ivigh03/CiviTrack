@@ -46,6 +46,25 @@ const complaintSchema = new mongoose.Schema(
   },
 ],
 
+    // 🕘 Generic activity log — one entry per lifecycle event
+    activityLog: [
+      {
+        action: {
+          type: String,
+          required: true,
+        },
+        performedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     // 🎯 Priority
     priority: {
       type: String,
@@ -129,6 +148,20 @@ const complaintSchema = new mongoose.Schema(
     // 🕒 Tracking timestamps
     startedAt: Date,
     resolvedAt: Date,
+
+    // ⭐ Citizen feedback after resolution
+    citizenRating: {
+      stars: {
+        type: Number,
+        min: 1,
+        max: 5,
+      },
+      comment: {
+        type: String,
+        default: "",
+      },
+      ratedAt: Date,
+    },
   },
   {
     timestamps: true,

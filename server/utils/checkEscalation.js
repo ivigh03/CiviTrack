@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import { createNotification } from "./createNotification.js";
 import { getIO } from "../socket.js";
 import { broadcastDashboardUpdate } from "./dashboardSnapshot.js";
+import { logActivity } from "./logActivity.js";
 
 const ACTIVE_STATUSES = ["pending", "assigned", "in-progress"];
 
@@ -22,6 +23,10 @@ export const applyEscalation = async (complaints) => {
 
   for (const complaint of toEscalate) {
     complaint.escalated = true;
+    logActivity(complaint, {
+      action: "Escalated",
+      performedBy: null,
+    });
     await complaint.save();
 
     for (const admin of admins) {

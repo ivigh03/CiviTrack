@@ -25,3 +25,15 @@ export const completeComplaint = async (id, formData) => {
 
   return res.data.data;
 };
+
+// 🔥 Get a single complaint by id
+export const getComplaintById = async (id) => {
+  const res = await API.get(`/complaints/${id}`);
+  return res.data.data;
+};
+
+// 🔥 Citizen rates a resolved complaint
+export const rateComplaint = async (id, { stars, comment }) => {
+  const res = await API.put(`/complaints/${id}/rate`, { stars, comment });
+  return res.data.data;
+};
