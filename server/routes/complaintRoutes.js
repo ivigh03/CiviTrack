@@ -225,6 +225,13 @@ router.put(
       const { type } =
         req.body;
 
+      if (type !== "upvote" && type !== "downvote") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid vote type",
+        });
+      }
+
       const complaint =
         await Complaint.findById(
           req.params.id
@@ -238,13 +245,33 @@ router.put(
         });
       }
 
-      // ✅ Vote update
-      if (type === "upvote") {
-        complaint.upvotes += 1;
-      }
+      // ✅ Enforce one vote per user
+      const existingVote = complaint.votedUsers.find(
+        (v) => v.user.toString() === req.user._id.toString()
+      );
 
-      if (type === "downvote") {
-        complaint.downvotes += 1;
+      if (!existingVote) {
+        if (type === "upvote") complaint.upvotes += 1;
+        if (type === "downvote") complaint.downvotes += 1;
+
+        complaint.votedUsers.push({
+          user: req.user._id,
+          vote: type,
+        });
+      } else if (existingVote.vote === type) {
+        return res.json({
+          success: true,
+          data: complaint,
+          message: "You have already voted on this complaint",
+        });
+      } else {
+        if (existingVote.vote === "upvote") complaint.upvotes -= 1;
+        if (existingVote.vote === "downvote") complaint.downvotes -= 1;
+
+        if (type === "upvote") complaint.upvotes += 1;
+        if (type === "downvote") complaint.downvotes += 1;
+
+        existingVote.vote = type;
       }
 
       await complaint.save();
