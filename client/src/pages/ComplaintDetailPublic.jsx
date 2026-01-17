@@ -91,6 +91,15 @@ export default function ComplaintDetailPublic() {
   );
 
   async function handleVote(type) {
+    const previous = complaint;
+
+    // ✅ OPTIMISTIC UI — bump the count instantly, reconcile/roll back below
+    setComplaint((prev) => ({
+      ...prev,
+      upvotes: type === "upvote" ? prev.upvotes + 1 : prev.upvotes,
+      downvotes: type === "downvote" ? prev.downvotes + 1 : prev.downvotes,
+    }));
+
     try {
       const res = await axios.put(
         `/complaints/${id}/vote`,
@@ -100,6 +109,7 @@ export default function ComplaintDetailPublic() {
       setComplaint(res.data.data);
     } catch (err) {
       console.error(err);
+      setComplaint(previous);
     }
   }
 }

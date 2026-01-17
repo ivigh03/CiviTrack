@@ -58,6 +58,10 @@ io.on("connection", (socket) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.join(decoded.id);
 
+      if (decoded.role === "admin") {
+        socket.join("admins");
+      }
+
       console.log(
         `✅ User joined room ${decoded.id}`
       );

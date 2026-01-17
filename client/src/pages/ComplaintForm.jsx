@@ -17,7 +17,7 @@ import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
 import Button from "../components/ui/Button";
 
-import { fetchComplaints } from "../features/complaints/complaintSlice";
+import { fetchComplaints, complaintAdded, complaintRemoved } from "../features/complaints/complaintSlice";
 
 function ComplaintForm() {
 
@@ -142,6 +142,8 @@ const currentUserId =
   // 📤 SUBMIT
   const submitComplaint = async () => {
 
+  let tempId = null;
+
   try {
 
     if (
@@ -219,6 +221,26 @@ const currentUserId =
 
     const token = authData?.token;
 
+    // ✅ OPTIMISTIC UI — show the complaint instantly, before the server confirms
+    tempId = `temp-${Date.now()}`;
+
+    dispatch(
+      complaintAdded({
+        _id: tempId,
+        title,
+        address,
+        location,
+        userDescription: description,
+        category: "general",
+        severity: "medium",
+        status: "pending",
+        upvotes: 0,
+        downvotes: 0,
+        createdAt: new Date().toISOString(),
+        user: userId,
+      })
+    );
+
     // ✅ API CALL
     const res = await axios.post(
       "http://localhost:5000/api/complaints",
@@ -256,6 +278,11 @@ const currentUserId =
       err.response?.data ||
       err.message
     );
+
+    // ✅ Roll back the optimistic entry — the server never confirmed it
+    if (tempId) {
+      dispatch(complaintRemoved(tempId));
+    }
 
     toast.error(
       err.response?.data?.message ||

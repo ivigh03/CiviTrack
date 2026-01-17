@@ -3,6 +3,7 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import { motion } from "framer-motion";
 import HeatLayer from "./HeatLayer";
 import { getComplaintLocations } from "../api/complaintApi";
+import socket from "../socket";
 
 const SEVERITY_INTENSITY = {
   low: 0.3,
@@ -25,6 +26,21 @@ export default function HeatmapView() {
         console.error("HEATMAP FETCH ERROR:", err);
         setPoints([]);
       });
+  }, []);
+
+  // 🔴 Live: append newly-submitted complaints without a full re-fetch.
+  useEffect(() => {
+    const handleComplaintNew = (complaint) => {
+      const { lat, lng } = complaint.location || {};
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      setPoints((prev) => [...(prev || []), { lat, lng, severity: complaint.severity }]);
+    };
+
+    socket.on("complaint:new", handleComplaintNew);
+
+    return () => socket.off("complaint:new", handleComplaintNew);
   }, []);
 
   if (points === null) {
