@@ -74,6 +74,9 @@ export const updateStatus = async (req, res) => {
     }
 
     complaint.status = status;
+    if (status === "resolved") {
+      complaint.resolvedAt = new Date();
+    }
     logActivity(complaint, {
       action: `Status changed to ${formatStatusLabel(status)}`,
       performedBy: req.user._id,
@@ -328,6 +331,99 @@ export const getUsers = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// 📊 Per-staff performance metrics + org-wide monthly resolved trend
+export const getStaffPerformance = async (req, res) => {
+  try {
+    const staffList = await User.find({ role: "staff" }).select("name specialization");
+
+    const resolutionAgg = await Complaint.aggregate([
+      { $match: { assignedTo: { $ne: null }, status: "resolved", resolvedAt: { $ne: null } } },
+      {
+        $group: {
+          _id: "$assignedTo",
+          avgResolutionMs: { $avg: { $subtract: ["$resolvedAt", "$createdAt"] } },
+          totalResolved: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const pendingAgg = await Complaint.aggregate([
+      { $match: { assignedTo: { $ne: null }, status: "in-progress" } },
+      { $group: { _id: "$assignedTo", pending: { $sum: 1 } } },
+    ]);
+
+    const escalatedAgg = await Complaint.aggregate([
+      { $match: { assignedTo: { $ne: null }, escalated: true } },
+      { $group: { _id: "$assignedTo", escalated: { $sum: 1 } } },
+    ]);
+
+    const ratingAgg = await Complaint.aggregate([
+      { $match: { assignedTo: { $ne: null }, "citizenRating.stars": { $exists: true } } },
+      { $group: { _id: "$assignedTo", avgRating: { $avg: "$citizenRating.stars" } } },
+    ]);
+
+    const totalAssignedAgg = await Complaint.aggregate([
+      { $match: { assignedTo: { $ne: null } } },
+      { $group: { _id: "$assignedTo", totalAssigned: { $sum: 1 } } },
+    ]);
+
+    const toMap = (agg) => new Map(agg.map((row) => [row._id.toString(), row]));
+    const resolutionMap = toMap(resolutionAgg);
+    const pendingMap = toMap(pendingAgg);
+    const escalatedMap = toMap(escalatedAgg);
+    const ratingMap = toMap(ratingAgg);
+    const totalAssignedMap = toMap(totalAssignedAgg);
+
+    const staff = staffList.map((user) => {
+      const id = user._id.toString();
+      const resolution = resolutionMap.get(id);
+      const totalResolved = resolution?.totalResolved || 0;
+      const totalAssigned = totalAssignedMap.get(id)?.totalAssigned || 0;
+
+      return {
+        staffId: user._id,
+        name: user.name,
+        specialization: user.specialization,
+        avgResolutionTimeHours: resolution
+          ? Math.round((resolution.avgResolutionMs / (1000 * 60 * 60)) * 10) / 10
+          : null,
+        totalResolved,
+        pending: pendingMap.get(id)?.pending || 0,
+        escalated: escalatedMap.get(id)?.escalated || 0,
+        avgRating: ratingMap.has(id) ? Math.round(ratingMap.get(id).avgRating * 10) / 10 : null,
+        completionPercent: totalAssigned > 0 ? Math.round((totalResolved / totalAssigned) * 100) : null,
+      };
+    });
+
+    const now = new Date();
+    const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+
+    const monthlyAgg = await Complaint.aggregate([
+      { $match: { status: "resolved", resolvedAt: { $gte: sixMonthsAgo, $ne: null } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$resolvedAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const countsByMonth = Object.fromEntries(monthlyAgg.map((m) => [m._id, m.count]));
+
+    const monthlyTrend = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(Date.UTC(sixMonthsAgo.getUTCFullYear(), sixMonthsAgo.getUTCMonth() + i, 1));
+      const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+      monthlyTrend.push({ month: key, count: countsByMonth[key] || 0 });
+    }
+
+    res.json({ staff, monthlyTrend });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;

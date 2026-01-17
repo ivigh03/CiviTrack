@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getDashboard,
+  getStaffPerformance,
   getComplaints,
   updateStatus,
   assignStaff,
@@ -24,6 +25,8 @@ const router = express.Router();
 router.get("/users", protect, authorizeRoles("admin"), getUsers);
 
 router.get("/dashboard", protect, authorizeRoles("admin"), getDashboard);
+
+router.get("/staff-performance", protect, authorizeRoles("admin"), getStaffPerformance);
 
 router.get(
   "/notifications",

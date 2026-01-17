@@ -17,6 +17,7 @@ import ComplaintForm from "./pages/ComplaintForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Complaints from "./pages/admin/Complaints";
 import UsersPage from "./pages/admin/UsersPage";
+import StaffPerformance from "./pages/admin/StaffPerformance";
 import Heatmap from "./components/admin/Heatmap";
 import ComplaintDetails from "./pages/admin/ComplaintDetail";
 import Notifications from "./pages/admin/Notifcations";
@@ -122,6 +123,16 @@ function App() {
     <ProtectedRoute role="admin">
       <AdminWrapper>
         <Heatmap />
+      </AdminWrapper>
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/staff-performance"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminWrapper>
+        <StaffPerformance />
       </AdminWrapper>
     </ProtectedRoute>
   }
