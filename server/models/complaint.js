@@ -17,6 +17,27 @@ const complaintSchema = new mongoose.Schema(
     aiDescription: String,
     userDescription: String,
 
+    // 🤖 AI Duplicate Detection — cached semantic embedding of userDescription,
+    // computed once at creation time and lazily backfilled for older complaints
+    // encountered as duplicate-check candidates
+    descriptionEmbedding: {
+      type: [Number],
+      default: undefined,
+    },
+
+    // Text that was embedded — lets a future backfill detect staleness if
+    // userDescription is ever edited
+    embeddingSourceText: {
+      type: String,
+      default: undefined,
+    },
+
+    // Which embedding model produced descriptionEmbedding
+    embeddingModel: {
+      type: String,
+      default: undefined,
+    },
+
     // 📂 Category
     category: String,
 
@@ -168,6 +189,15 @@ const complaintSchema = new mongoose.Schema(
   }
   
 );
+
+// Speeds up the bounding-box + status + category prefilter used by
+// AI duplicate detection
+complaintSchema.index({
+  "location.lat": 1,
+  "location.lng": 1,
+  status: 1,
+  category: 1,
+});
 
 export default mongoose.model(
   "Complaint",

@@ -16,8 +16,10 @@ import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
 import Button from "../components/ui/Button";
+import DuplicateConfirmModal from "../components/complaints/DuplicateConfirmModal";
 
 import { fetchComplaints, complaintAdded, complaintRemoved } from "../features/complaints/complaintSlice";
+import { checkDuplicateComplaint } from "../api/complaintApi";
 
 function ComplaintForm() {
 
@@ -74,6 +76,9 @@ const currentUserId =
 
   const [loading, setLoading] =
     useState(false);
+
+  const [duplicateCheck, setDuplicateCheck] =
+    useState({ open: false, bestMatch: null });
 
   // 📸 IMAGE
   const handleImage = (file) => {
@@ -148,26 +153,13 @@ const currentUserId =
     setSuggestions([]);
   };
 
-  // 📤 SUBMIT
-  const submitComplaint = async () => {
+  // 📤 CREATE — the actual complaint creation request. Runs immediately when
+  // no duplicate is found, or after the citizen chooses "submit anyway".
+  const createComplaintRequest = async () => {
 
   let tempId = null;
 
   try {
-
-    if (
-      !image ||
-      !title ||
-      !description ||
-      !address
-    ) {
-
-      toast.error(
-        "Please fill all required fields"
-      );
-
-      return;
-    }
 
     setLoading(true);
 
@@ -320,6 +312,53 @@ const currentUserId =
 
   }
 };
+
+  // 📤 SUBMIT — click handler: pre-flight AI duplicate check, then create
+  const submitComplaint = async () => {
+
+    if (
+      !image ||
+      !title ||
+      !description ||
+      !address
+    ) {
+
+      toast.error(
+        "Please fill all required fields"
+      );
+
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+
+      const result = await checkDuplicateComplaint({
+        location,
+        description,
+        category: category || "general",
+      });
+
+      if (result.isDuplicate && result.bestMatch) {
+        setLoading(false);
+        setDuplicateCheck({
+          open: true,
+          bestMatch: result.bestMatch,
+        });
+        return; // pause — createComplaintRequest only runs from the modal now
+      }
+
+    } catch (err) {
+      // Fail open — never block submission because the duplicate check errored
+      console.warn(
+        "Duplicate check failed, proceeding with submission:",
+        err
+      );
+    }
+
+    await createComplaintRequest();
+  };
 
   return (
     <div className="min-h-screen bg-background px-4 py-10">
@@ -493,6 +532,23 @@ const currentUserId =
         </Button>
 
       </Card>
+
+      <DuplicateConfirmModal
+        open={duplicateCheck.open}
+        onOpenChange={(open) =>
+          setDuplicateCheck((s) => ({ ...s, open }))
+        }
+        bestMatch={duplicateCheck.bestMatch}
+        onSupportExisting={() => {
+          const matchId = duplicateCheck.bestMatch._id;
+          setDuplicateCheck({ open: false, bestMatch: null });
+          navigate(`/complaint/${matchId}`);
+        }}
+        onSubmitAnyway={async () => {
+          setDuplicateCheck({ open: false, bestMatch: null });
+          await createComplaintRequest();
+        }}
+      />
     </div>
   );
 }
