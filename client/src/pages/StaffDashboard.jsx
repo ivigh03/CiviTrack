@@ -12,6 +12,7 @@ import { SkeletonCard } from "../components/ui/Skeleton";
 import { useTheme } from "../context/ThemeContext";
 
 import { getAllComplaints } from "../api/complaintApi";
+import useRealtimeStaff from "../hooks/useRealtimeStaff";
 
 export default function StaffDashboard() {
 
@@ -88,6 +89,9 @@ export default function StaffDashboard() {
     }
 
   }, [user]);
+
+  // ✅ LIVE UPDATES — auto-assigned/reassigned complaints appear without a reload
+  useRealtimeStaff(setComplaints);
 
   // ✅ FILTER STAFF COMPLAINTS
   const activeComplaints =

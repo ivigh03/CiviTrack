@@ -5,12 +5,27 @@ import Modal from "../ui/Modal";
 import Select from "../ui/Select";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
+import LocationSearchInput from "../ui/LocationSearchInput";
+
+const SPECIALIZATIONS = ["garbage", "water", "road", "electricity", "general"];
 
 const UserModal = ({ user, onClose, refresh }) => {
   const [role, setRole] = useState(user.role);
+  const [specialization, setSpecialization] = useState(user.specialization || "general");
+  const [isAvailable, setIsAvailable] = useState(user.isAvailable ?? true);
+  const [location, setLocation] = useState(user.location || { lat: null, lng: null });
 
   const handleUpdate = async () => {
     await axios.put(`/admin/users/${user._id}/role`, { role });
+
+    if (role === "staff") {
+      await axios.put(`/admin/users/${user._id}/staff-profile`, {
+        specialization,
+        isAvailable,
+        location,
+      });
+    }
+
     refresh();
     onClose();
   };
@@ -60,6 +75,39 @@ const UserModal = ({ user, onClose, refresh }) => {
           <option value="citizen">Citizen</option>
         </Select>
       </div>
+
+      {/* STAFF AUTO-ASSIGNMENT PROFILE */}
+      {role === "staff" && (
+        <div className="mt-4 space-y-4">
+          <Select
+            label="Specialization"
+            value={specialization}
+            onChange={(e) => setSpecialization(e.target.value)}
+          >
+            {SPECIALIZATIONS.map((s) => (
+              <option key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </option>
+            ))}
+          </Select>
+
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              checked={isAvailable}
+              onChange={(e) => setIsAvailable(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Available for auto-assignment
+          </label>
+
+          <LocationSearchInput
+            label="Location (for nearest-staff matching)"
+            value={location}
+            onChange={setLocation}
+          />
+        </div>
+      )}
 
       {/* ACTIONS */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">

@@ -51,6 +51,12 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
+    // Set by admin — used to score "nearest staff" for auto-assignment
+    location: {
+      lat: Number,
+      lng: Number,
+    },
+
     assignedComplaints: [
       {
         type: mongoose.Schema.Types.ObjectId,
