@@ -1,24 +1,29 @@
 import express from "express";
-import dotenv from "dotenv";
+import mongoose from "mongoose";
 import cors from "cors";
-import connectDB from "./config/db.js";
-
+import dotenv from "dotenv"; 
 dotenv.config();
 
-// 🔥 CONNECT DB
-connectDB();
+import complaintRoutes from "./routes/complaintRoutes.js";
+
+
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
-  res.send("CiviTrack API Running...");
-});
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
 
-const PORT = process.env.PORT || 5000;
+// Routes
+app.use("/api/complaints", complaintRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Server
+const PORT = process.env.PORT || 5000; // ✅ slight improvement
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
