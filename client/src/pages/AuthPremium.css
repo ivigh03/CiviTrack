@@ -1,0 +1,120 @@
+/* 🌌 Background */
+.premium-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at top, #1f1c2c, #0f0c29);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* 💎 Glass Card */
+.premium-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2.5rem;
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: #fff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🧠 Text */
+.premium-card h2 {
+    margin: 0;
+    text-align: center;
+}
+
+.subtitle {
+    text-align: center;
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+/* 🧾 Floating Inputs */
+.input-group {
+    position: relative;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    outline: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    font-size: 14px;
+}
+
+.input-group label {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    font-size: 13px;
+    color: #aaa;
+    transition: 0.3s;
+}
+
+.input-group input:focus+label,
+.input-group input:valid+label {
+    top: -8px;
+    font-size: 11px;
+    color: #fff;
+}
+
+/* 🎯 Role Select */
+.role-select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+/* 🔘 Button */
+.premium-card button {
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.premium-card button:hover {
+    transform: scale(1.03);
+}
+
+.premium-card button:disabled {
+    opacity: 0.6;
+}
+
+/* 🔗 Switch */
+.switch {
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.switch a {
+    color: #8ab4ff;
+    text-decoration: none;
+}

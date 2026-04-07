@@ -17,25 +17,6 @@ export default function ResultCard({ result, onSubmit }) {
 
       <p><strong>Category:</strong> {result.category}</p>
       <p><strong>Priority:</strong> {result.priority}</p>
-
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        style={{
-          width: "100%",
-          height: "120px",
-          borderRadius: "10px",
-          padding: "10px",
-          marginTop: "10px"
-        }}
-      />
-
-      <button
-        style={{ marginTop: 10 }}
-        onClick={() => onSubmit(description, result.file)}
-      >
-        Submit Complaint
-      </button>
     </div>
   );
 }
