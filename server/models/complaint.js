@@ -65,7 +65,7 @@ const complaintSchema = new mongoose.Schema(
     // 📌 Status tracking
     status: {
       type: String,
-      enum: ["pending", "in-progress", "resolved", "rejected"],
+      enum: ["pending", "in-progress", "resolved", "rejected","escalated"],
       default: "pending",
     },
 

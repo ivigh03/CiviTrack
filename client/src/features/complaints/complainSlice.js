@@ -3,7 +3,7 @@ import {
   fetchComplaintsAPI,
   updateStatusAPI,
   assignStaffAPI,
-} from "./complaintAPI";
+} from "./complainAPI";
 
 // 🔥 Fetch complaints
 export const fetchComplaints = createAsyncThunk(

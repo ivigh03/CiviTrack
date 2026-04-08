@@ -4,7 +4,7 @@ import {
   fetchComplaints,
   updateStatus,
   assignStaff,
-} from "../../features/complaint/complaintSlice";
+} from "../../features/complaints/complainSlice";
 import ComplaintCard from "../../components/admin/ComplaintCard";
 
 const Complaints = () => {

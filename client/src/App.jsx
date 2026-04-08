@@ -1,41 +1,91 @@
-import React, { useState } from "react";
-import axios from "axios";
-import "leaflet/dist/leaflet.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
+
 import CitizenDashboard from "./pages/CitizenDashboard";
-import ComplaintDetail from "./pages/ComplaintDetail";
 import StaffDashboard from "./pages/StaffDashboard";
+import ComplaintDetail from "./pages/ComplaintDetail";
 import ComplaintForm from "./pages/ComplaintForm";
 
-// 🧠 Simple Admin Dashboard
-const AdminDashboard = () => <h1>Admin Dashboard</h1>;
+// ✅ ADMIN PAGES
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Complaints from "./pages/admin/Complaints";
+import UsersPage from "./pages/admin/UsersPage";
+import Heatmap from "./components/admin/Heatmap";
 
-// ✅ MAIN APP (Single Entry Point)
+// ✅ NAVBAR
+import Navbar from "./components/admin/Navbar";
+
+// ✅ Wrapper
+const AdminWrapper = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-[#0f172a]">
+      <Navbar />
+      <div className="p-6">{children}</div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         {/* 🔓 Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* 🏠 Complaint Form (default landing after login ideally) */}
+        {/* 📝 Complaint */}
         <Route path="/complaintForm" element={<ComplaintForm />} />
+        <Route path="/complaint/:id" element={<ComplaintDetail />} />
 
-        {/* 🔐 Protected */}
+        {/* 🔐 Admin Routes */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute role="admin">
-              <AdminDashboard />
+              <AdminWrapper>
+                <AdminDashboard />
+              </AdminWrapper>
             </ProtectedRoute>
           }
         />
 
+        <Route
+          path="/admin/complaints"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminWrapper>
+                <Complaints />
+              </AdminWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+  path="/admin/users"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminWrapper>
+        <UsersPage />
+      </AdminWrapper>
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/heatmap"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminWrapper>
+        <Heatmap />
+      </AdminWrapper>
+    </ProtectedRoute>
+  }
+/>
+
+        {/* 🔐 Staff */}
         <Route
           path="/staff"
           element={
@@ -45,6 +95,7 @@ function App() {
           }
         />
 
+        {/* 🔐 Citizen */}
         <Route
           path="/citizen"
           element={
@@ -54,10 +105,9 @@ function App() {
           }
         />
 
-        <Route path="/complaint/:id" element={<ComplaintDetail />} />
-
         {/* 🔁 Fallback */}
         <Route path="*" element={<Navigate to="/login" />} />
+
       </Routes>
     </BrowserRouter>
   );
