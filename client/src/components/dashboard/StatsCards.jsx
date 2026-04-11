@@ -1,6 +1,6 @@
 export default function StatsCards({ complaints }) {
   const total = complaints.length;
-  const open = complaints.filter(c => c.status === "open").length;
+  const pending = complaints.filter(c => c.status === "pending").length;
   const progress = complaints.filter(c => c.status === "in-progress").length;
   const resolved = complaints.filter(c => c.status === "resolved").length;
 

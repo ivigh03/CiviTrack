@@ -1,12 +1,22 @@
-import { useState } from "react";
-import { useSelector } from "react-redux";
-import StatsCards from "../components/dashboard/StatsCards";
-import ComplaintList from "../components/dashboard/ComplaintList";
-import Filters from "../components/dashboard/Filters";
-import "../styles/dashboard.css";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchComplaints } from "../features/complaints/complaintSlice";
+import { motion } from "framer-motion";
+
+import Navbar from "../components/citizen/Navbar";
+import Home from "../components/citizen/Home";
+import MyComplaints from "../components/citizen/MyComplaints";
+import AllComplaints from "../components/citizen/AllComplaints";
+import Heatmap from "../components/citizen/Heatmap";
+import Notifications from "../components/citizen/Notifications";
+
+import "../styles/citizen.css";
 
 export default function CitizenDashboard() {
-  const { complaints } = useSelector((state) => state.complaints);
+  const dispatch = useDispatch();
+  const { complaints, loading } = useSelector((state) => state.complaints);
+
+  const [activeTab, setActiveTab] = useState("home");
 
   const [filters, setFilters] = useState({
     category: "",
@@ -14,31 +24,58 @@ export default function CitizenDashboard() {
     date: "",
   });
 
+  useEffect(() => {
+    dispatch(fetchComplaints());
+  }, [dispatch]);
+
   const filtered = complaints.filter((c) => {
     return (
       (!filters.category || c.category === filters.category) &&
-      (!filters.area || c.area.toLowerCase().includes(filters.area.toLowerCase())) &&
-      (!filters.date || c.createdAt === filters.date)
+      (!filters.area ||
+        c.address?.toLowerCase().includes(filters.area.toLowerCase())) &&
+      (!filters.date || c.createdAt?.slice(0, 10) === filters.date)
     );
   });
 
+  const renderPage = () => {
+    if (loading) return <p>Loading...</p>;
+
+    switch (activeTab) {
+      case "home":
+        return <Home complaints={complaints} />;
+      case "my":
+        return <MyComplaints complaints={filtered} />;
+      case "all":
+        return (
+          <AllComplaints
+            complaints={filtered}
+            filters={filters}
+            setFilters={setFilters}
+          />
+        );
+      case "heatmap":
+        return <Heatmap />;
+      case "notifications":
+        return <Notifications />;
+      default:
+        return <Home complaints={complaints} />;
+    }
+  };
+
   return (
-    <div className="dashboard-container">
-      {/* 🧭 Navbar */}
-      <div className="navbar">
-        <h2>CiviTrack</h2>
-        <span>Citizen</span>
-      </div>
+    <div className="citizen-container">
+      <Navbar setActiveTab={setActiveTab} />
 
-      <div className="dashboard">
-        <h1>Dashboard</h1>
-
-        <StatsCards complaints={filtered} />
-
-        <Filters filters={filters} setFilters={setFilters} />
-
-        <ComplaintList complaints={filtered} />
-      </div>
+      {/* 🔥 ANIMATED PAGE */}
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="citizen-content"
+      >
+        {renderPage()}
+      </motion.div>
     </div>
   );
 }
