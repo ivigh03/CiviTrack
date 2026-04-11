@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import { useEffect } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -14,7 +14,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Complaints from "./pages/admin/Complaints";
 import UsersPage from "./pages/admin/UsersPage";
 import Heatmap from "./components/admin/Heatmap";
-
+import ComplaintDetails from "./pages/admin/ComplaintDetail";
+import Notifications from "./pages/admin/Notifcations";
+import socket from "./socket";
 // ✅ NAVBAR
 import Navbar from "./components/admin/Navbar";
 
@@ -29,6 +31,13 @@ const AdminWrapper = ({ children }) => {
 };
 
 function App() {
+  useEffect(() => {
+  socket.on("newNotification", (data) => {
+    console.log("Global:", data);
+  });
+
+  return () => socket.off("newNotification");
+}, []);
   return (
     <BrowserRouter>
       <Routes>
@@ -80,6 +89,26 @@ function App() {
     <ProtectedRoute role="admin">
       <AdminWrapper>
         <Heatmap />
+      </AdminWrapper>
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/complaints/:id"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminWrapper>
+        <ComplaintDetails />
+      </AdminWrapper>
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/notifications"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminWrapper>
+        <Notifications />
       </AdminWrapper>
     </ProtectedRoute>
   }

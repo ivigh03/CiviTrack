@@ -16,9 +16,9 @@ const Complaints = () => {
 
   useEffect(() => {
     dispatch(fetchComplaints());
-  }, []);
+  }, [dispatch]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-white">Loading...</p>;
 
   const filtered = data
     .filter((c) =>
@@ -29,14 +29,14 @@ const Complaints = () => {
     );
 
   return (
-    <div>
-      <h1 className="text-2xl mb-4">Complaints</h1>
+    <div className="text-white">
 
-      {/* 🔍 FILTERS */}
-      <div className="flex gap-4 mb-6">
+      {/* 🔥 FILTER BAR (LIKE SCREENSHOT) */}
+      <div className="bg-white text-black rounded-xl p-4 mb-6 shadow-md flex flex-wrap gap-4 items-center">
+
         <input
-          placeholder="Search..."
-          className="border p-2 rounded"
+          placeholder="Search by title..."
+          className="border p-2 rounded w-[200px]"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -46,15 +46,34 @@ const Complaints = () => {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="ALL">All</option>
+          <option value="ALL">All Status</option>
           <option value="pending">Pending</option>
           <option value="in-progress">In Progress</option>
           <option value="resolved">Resolved</option>
         </select>
+
+        <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          Search
+        </button>
+
+        <button
+          onClick={() => {
+            setSearch("");
+            setStatusFilter("ALL");
+          }}
+          className="bg-purple-100 text-purple-600 px-4 py-2 rounded"
+        >
+          Clear
+        </button>
       </div>
 
-      {/* 📋 LIST */}
-      <div className="grid md:grid-cols-2 gap-4">
+      {/* 📊 COUNT */}
+      <p className="mb-4 text-gray-300">
+        Found {filtered.length} Complaints
+      </p>
+
+      {/* 📋 GRID */}
+      <div className="grid md:grid-cols-3 gap-5">
         {filtered.map((c) => (
           <ComplaintCard
             key={c._id}
@@ -68,6 +87,13 @@ const Complaints = () => {
           />
         ))}
       </div>
+
+      {/* EMPTY */}
+      {filtered.length === 0 && (
+        <div className="text-center mt-6 text-gray-400">
+          No complaints found
+        </div>
+      )}
     </div>
   );
 };

@@ -1,47 +1,44 @@
-const ComplaintCard = ({ complaint, onStatusChange }) => {
-  const isEscalated = complaint.escalated;
+import { useNavigate } from "react-router-dom";
+const ComplaintCard = ({ complaint }) => {
+  const navigate = useNavigate();
+  const getBorderColor = () => {
+    if (complaint.status === "in-progress") return "border-blue-500";
+    if (complaint.status === "resolved") return "border-green-500";
+    if (complaint.status === "pending") return "border-orange-500";
+    return "border-gray-500";
+  };
 
   return (
     <div
-      className={`p-5 rounded-xl shadow bg-white border-l-4 ${
-        isEscalated ? "border-red-500" : "border-blue-500"
-      }`}
+      onClick={() => navigate(`/admin/complaints/${complaint._id}`)}
+      className="bg-white text-black rounded-lg shadow-md p-4 border-l-4 cursor-pointer hover:scale-105 transition"
     >
-      {/* Title */}
-      <h2 className="text-lg font-semibold">{complaint.title}</h2>
+      {/* TITLE */}
+      <h2 className="font-semibold text-lg text-green-600">
+        {complaint.title}
+      </h2>
 
-      {/* Description */}
-      <p className="text-gray-600 mt-2">{complaint.description}</p>
+      {/* DESCRIPTION */}
+      <p className="text-sm text-gray-600 mt-1">
+        {complaint.userDescription || "No description"}
+      </p>
 
-      {/* Info */}
-      <div className="flex justify-between mt-4 text-sm">
-        <span>Status: {complaint.status}</span>
-        <span>Category: {complaint.category}</span>
+      {/* STATUS + LOCATION */}
+      <div className="flex justify-between mt-3 text-sm">
+        <p>
+          Status:{" "}
+          <span className="font-semibold text-blue-600">
+            {complaint.status.toUpperCase()}
+          </span>
+        </p>
+        <p>Location: {complaint.address || "N/A"}</p>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 mt-4">
-        <button
-          onClick={() => onStatusChange(complaint._id, "IN_PROGRESS")}
-          className="bg-yellow-500 text-white px-3 py-1 rounded"
-        >
-          Start
-        </button>
-
-        <button
-          onClick={() => onStatusChange(complaint._id, "RESOLVED")}
-          className="bg-green-500 text-white px-3 py-1 rounded"
-        >
-          Resolve
-        </button>
-      </div>
-
-      {/* Escalation */}
-      {isEscalated && (
-        <div className="mt-3 text-red-500 font-semibold">
-          ⚠ Escalated
-        </div>
-      )}
+      {/* DATE */}
+      <p className="text-xs text-gray-500 mt-2">
+        Created:{" "}
+        {new Date(complaint.createdAt).toLocaleDateString()}
+      </p>
     </div>
   );
 };
