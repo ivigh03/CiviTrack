@@ -5,6 +5,7 @@
     font-family: "Segoe UI", sans-serif;
 }
 
+/* 🧭 Navbar */
 .staff-navbar {
     display: flex;
     justify-content: space-between;
@@ -17,6 +18,7 @@
     padding: 30px 40px;
 }
 
+/* 📊 Overview */
 .overview-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -37,102 +39,174 @@
     transform: translateY(-5px);
 }
 
-/* 📋 List */
+/* 📋 Complaint List */
 .staff-list {
     margin-top: 20px;
 }
 
-/* 📦 Card */
+/* 📦 Complaint Card */
 .staff-card {
     background: rgba(255, 255, 255, 0.06);
     padding: 15px;
     border-radius: 12px;
     margin-bottom: 15px;
     transition: 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .staff-card:hover {
     transform: scale(1.02);
 }
 
-/* 🔝 Top */
+/* 🔝 Card Top */
 .card-top {
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 /* 📍 Area */
 .area {
     font-size: 14px;
     opacity: 0.7;
+    margin-top: 4px;
 }
 
 /* 🧠 Status */
 .status {
-    font-size: 13px;
-    margin: 5px 0;
+    font-size: 14px;
+    margin: 8px 0;
+    color: #ddd;
 }
 
-/* 🎯 Priority */
+/* 🎯 Priority Badge */
 .priority {
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 .priority.high {
-    background: red;
+    background: #ff4d4d;
+    color: white;
 }
 
 .priority.medium {
-    background: orange;
+    background: #ffb84d;
+    color: black;
 }
 
 .priority.low {
-    background: green;
+    background: #4caf50;
+    color: white;
 }
 
-/* 🔘 Button */
+/* 🔘 Buttons */
 .action-btn {
-    margin-top: 10px;
-    padding: 8px;
+    margin-top: 12px;
+    padding: 10px 14px;
     border-radius: 8px;
     border: none;
     cursor: pointer;
     background: #667eea;
     color: white;
+    font-weight: 600;
+    transition: 0.3s;
 }
 
-/* 🔥 Modal */
+.action-btn:hover {
+    background: #5568d8;
+    transform: translateY(-2px);
+}
+
+/* 🔥 Modal Overlay */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 999;
 }
 
+/* 📦 Modal Box */
 .modal {
     background: #1f1c2c;
-    padding: 20px;
-    border-radius: 12px;
-    width: 300px;
+    padding: 24px;
+    border-radius: 14px;
+    width: 340px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+/* 📝 Inputs */
+.modal input,
 .modal textarea {
     width: 100%;
-    margin-top: 10px;
-    padding: 8px;
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #2a254d;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
 }
 
+/* ✨ Placeholder */
+.modal input::placeholder,
+.modal textarea::placeholder {
+    color: #bbb;
+}
+
+/* 📄 Textarea */
+.modal textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* 🔘 Modal Buttons */
 .modal-actions {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
+    margin-top: 18px;
+    gap: 10px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+/* ✅ Submit */
+.modal-actions button:first-child {
+    background: #667eea;
+    color: white;
+}
+
+.modal-actions button:first-child:hover {
+    background: #5568d8;
+}
+
+/* ❌ Cancel */
+.modal-actions button:last-child {
+    background: #444;
+    color: white;
+}
+
+.modal-actions button:last-child:hover {
+    background: #555;
 }
 
 /* 🔔 Notifications */
@@ -151,14 +225,15 @@
 .timeline {
     display: flex;
     gap: 10px;
-    margin: 10px 0;
+    margin: 12px 0;
 }
 
 .step {
-    padding: 4px 8px;
+    padding: 5px 10px;
     border-radius: 6px;
     background: gray;
     font-size: 12px;
+    color: white;
 }
 
 .step.active {
