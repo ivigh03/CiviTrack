@@ -1,14 +1,14 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FaBell, FaUserCircle } from "react-icons/fa";
-
 import { useNotifications } from "../../context/NotificationContext";
 
 const Navbar = () => {
   const { notifications } = useNotifications();
 
-  const unreadCount =
-    notifications?.filter((n) => !n.read)?.length || 0;
+  const unreadCount = notifications.filter(
+    (n) => !n.read
+  ).length;
 
   return (
     <div className="flex items-center justify-between px-8 py-3 bg-gradient-to-r from-purple-600 via-indigo-500 to-purple-700 shadow-lg">
@@ -28,14 +28,16 @@ const Navbar = () => {
 
         {/* 🔔 NOTIFICATION ICON */}
         <div className="relative">
-          <NavLink to="/admin/notifications" className="text-white text-lg">
+          <NavLink
+            to="/admin/notifications"
+            className="text-white text-xl hover:scale-110 transition-transform duration-200"
+          >
             <FaBell />
           </NavLink>
 
-          {/* 🔥 BADGE */}
           {unreadCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-xs px-2 py-0.5 rounded-full">
-              {unreadCount}
+            <span className="absolute -top-2 -right-3 min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full shadow-md">
+              {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
         </div>
@@ -45,7 +47,9 @@ const Navbar = () => {
       {/* PROFILE */}
       <div className="flex items-center gap-2 text-white">
         <FaUserCircle size={28} />
-        <span className="text-sm font-medium">Admin User</span>
+        <span className="text-sm font-medium">
+          Admin User
+        </span>
       </div>
 
     </div>

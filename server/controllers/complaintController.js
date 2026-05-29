@@ -3,7 +3,7 @@ import fs from "fs";
 import Complaint from "../models/Complaint.js";
 import User from "../models/User.js";
 import { createNotification } from "../utils/createNotification.js";
-import { io } from "../server.js";
+import { getIO } from "../socket.js";
 import Notification from "../models/Notification.js";
 
 export const analyzeComplaintImage = async (req, res) => {
@@ -65,7 +65,9 @@ export const analyzeComplaintImage = async (req, res) => {
       await createNotification(notification);
 
       // 🔥 REAL-TIME SOCKET
-      io.emit("newNotification", notification);
+     getIO()
+  .to(admin._id.toString())
+  .emit("newNotification", notification);
     }
 
     res.json({

@@ -122,7 +122,9 @@ export const updateStatus = async (req, res) => {
           };
 
           await createNotification(notification);
-          getIO().emit("newNotification", notification);
+          getIO()
+  .to(admin._id.toString())
+  .emit("newNotification", notification);
         }
       }
     }
@@ -132,6 +134,62 @@ export const updateStatus = async (req, res) => {
   } catch (err) {
     console.error("UPDATE STATUS ERROR:", err);
     res.status(500).json({ message: err.message });
+  }
+};
+export const markAllNotificationsRead = async (req, res) => {
+  try {
+    await Notification.updateMany(
+      {
+        user: req.user._id,
+        read: false,
+      },
+      {
+        read: true,
+      }
+    );
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+export const clearNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({
+      user: req.user._id,
+    });
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+export const markNotificationRead = async (req, res) => {
+  try {
+    const notification =
+      await Notification.findByIdAndUpdate(
+        req.params.id,
+        {
+          read: true,
+        },
+        {
+          new: true,
+        }
+      );
+
+    res.json(notification);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
@@ -168,7 +226,9 @@ const populated = await Complaint.findById(updated._id)
 
     await createNotification(notification);
     console.log("🚀 EMITTING:", notification);
-    getIO().emit("newNotification", notification);
+    getIO()
+  .to(staffId.toString())
+  .emit("newNotification", notification);
     console.log("Notification created");
     res.json(populated);
 

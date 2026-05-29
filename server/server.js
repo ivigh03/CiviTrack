@@ -34,13 +34,15 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("🔌 User connected:", socket.id);
 
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`✅ User joined room ${userId}`);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ User disconnected");
   });
 });
-setIO(io);
-// 🔥 EXPORT io (VERY IMPORTANT)
-export { io };
 
 // 📦 Middleware
 app.use(cors());

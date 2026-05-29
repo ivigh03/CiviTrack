@@ -3,6 +3,8 @@ import { useDispatch } from "react-redux";
 import { loginUser } from "../features/auth/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import "./AuthPremium.css";
+import socket from "../socket.js";
+
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -10,6 +12,14 @@ export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (user?._id) {
+    socket.emit("join", user._id);
+  }
+}, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
