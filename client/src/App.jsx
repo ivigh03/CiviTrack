@@ -1,3 +1,5 @@
+import React from "react";
+import "leaflet/dist/leaflet.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Login from "./pages/Login";
@@ -8,6 +10,7 @@ import CitizenDashboard from "./pages/CitizenDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import ComplaintForm from "./pages/ComplaintForm";
+
 
 // ✅ ADMIN PAGES
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -46,6 +49,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
+        {/* 📝 Complaint Form */}
         {/* 📝 Complaint */}
         <Route path="/complaintForm" element={<ComplaintForm />} />
         <Route path="/complaint/:id" element={<ComplaintDetail />} />
@@ -134,6 +138,10 @@ function App() {
           }
         />
 
+        {/* 🔥 DETAIL PAGE */}
+        <Route path="/complaint/:id" element={<ComplaintDetail />} />
+
+        {/* 🔁 Default */}
         {/* 🔁 Fallback */}
         <Route path="*" element={<Navigate to="/login" />} />
 
