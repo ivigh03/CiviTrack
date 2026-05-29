@@ -14,9 +14,15 @@ import "../styles/citizen.css";
 
 export default function CitizenDashboard() {
   const dispatch = useDispatch();
-  const { complaints, loading } = useSelector((state) => state.complaints);
 
-  const [activeTab, setActiveTab] = useState("home");
+  // ✅ SAFE FALLBACK
+  const {
+    complaints = [],
+    loading,
+  } = useSelector((state) => state.complaints);
+
+  const [activeTab, setActiveTab] =
+    useState("home");
 
   const [filters, setFilters] = useState({
     category: "",
@@ -24,27 +30,51 @@ export default function CitizenDashboard() {
     date: "",
   });
 
+  // 🔥 FETCH DATA
   useEffect(() => {
     dispatch(fetchComplaints());
   }, [dispatch]);
 
-  const filtered = complaints.filter((c) => {
-    return (
-      (!filters.category || c.category === filters.category) &&
-      (!filters.area ||
-        c.address?.toLowerCase().includes(filters.area.toLowerCase())) &&
-      (!filters.date || c.createdAt?.slice(0, 10) === filters.date)
-    );
-  });
+  // ✅ SAFE FILTER
+  const filtered =
+    complaints?.filter((c) => {
+      return (
+        (!filters.category ||
+          c.category ===
+            filters.category) &&
 
+        (!filters.area ||
+          c.address
+            ?.toLowerCase()
+            .includes(
+              filters.area.toLowerCase()
+            )) &&
+
+        (!filters.date ||
+          c.createdAt?.slice(0, 10) ===
+            filters.date)
+      );
+    }) || [];
+
+  // 🔥 PAGE RENDERER
   const renderPage = () => {
-    if (loading) return <p>Loading...</p>;
+    if (loading) {
+      return <p>Loading...</p>;
+    }
 
     switch (activeTab) {
       case "home":
-        return <Home complaints={complaints} />;
+        return (
+          <Home complaints={complaints} />
+        );
+
       case "my":
-        return <MyComplaints complaints={filtered} />;
+        return (
+          <MyComplaints
+            complaints={filtered}
+          />
+        );
+
       case "all":
         return (
           <AllComplaints
@@ -53,25 +83,40 @@ export default function CitizenDashboard() {
             setFilters={setFilters}
           />
         );
+
       case "heatmap":
         return <Heatmap />;
+
       case "notifications":
         return <Notifications />;
+
       default:
-        return <Home complaints={complaints} />;
+        return (
+          <Home complaints={complaints} />
+        );
     }
   };
 
   return (
     <div className="citizen-container">
-      <Navbar setActiveTab={setActiveTab} />
+      <Navbar
+        setActiveTab={setActiveTab}
+      />
 
-      {/* 🔥 ANIMATED PAGE */}
+      {/* 🔥 Animated Page */}
       <motion.div
         key={activeTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        initial={{
+          opacity: 0,
+          y: 20,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.4,
+        }}
         className="citizen-content"
       >
         {renderPage()}
