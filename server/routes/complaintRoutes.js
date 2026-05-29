@@ -1,34 +1,37 @@
 import express from "express";
 import multer from "multer";
 import { analyzeComplaintImage } from "../controllers/complaintController.js";
-import Complaint from "../models/complaint.js";
+import Complaint from "../models/Complaint.js";
 
 const router = express.Router();
 
-// 📂 Multer config
+/* 📂 MULTER CONFIG */
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) => {
     const ext = file.originalname.split(".").pop();
-    cb(null, Date.now() + "." + ext); // ✅ keeps extension
+    cb(null, Date.now() + "." + ext);
   },
 });
 
 const upload = multer({ storage });
+
 /* 🧠 AI ANALYZE ROUTE */
-router.post("/analyze", upload.single("image"), analyzeComplaintImage);
+router.post(
+  "/analyze",
+  upload.single("image"),
+  analyzeComplaintImage
+);
 
 /* 📤 CREATE COMPLAINT */
 router.post("/", upload.single("image"), async (req, res) => {
   try {
-    // 🔥 SAFE LOCATION PARSE (FIXED)
     let location = null;
 
     if (req.body.location) {
       try {
         location = JSON.parse(req.body.location);
       } catch (err) {
-        console.error("Invalid location JSON");
         return res.status(400).json({
           success: false,
           message: "Invalid location format",
@@ -36,7 +39,6 @@ router.post("/", upload.single("image"), async (req, res) => {
       }
     }
 
-    // 🔥 VALIDATION (IMPORTANT)
     if (!req.body.title || !req.body.address) {
       return res.status(400).json({
         success: false,
@@ -44,13 +46,17 @@ router.post("/", upload.single("image"), async (req, res) => {
       });
     }
 
-    // 📦 CREATE COMPLAINT
     const complaint = new Complaint({
-      image: req.file ? `/uploads/${req.file.filename}` : null, // ✅ FIXED PATH
+      image: req.file
+        ? `/uploads/${req.file.filename}`
+        : null,
+
       location,
       address: req.body.address,
       title: req.body.title,
-      userDescription: req.body.userDescription || "",
+      userDescription:
+        req.body.userDescription || "",
+
       category: req.body.category || "general",
       severity: req.body.severity || "medium",
     });
@@ -60,9 +66,8 @@ router.post("/", upload.single("image"), async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Complaint saved successfully",
-      data: complaint, // ✅ return created complaint
+      data: complaint,
     });
-
   } catch (error) {
     console.error("CREATE ERROR:", error);
 
@@ -77,15 +82,13 @@ router.post("/", upload.single("image"), async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const complaints = await Complaint.find()
-      .populate("assignedTo") // ✅ ADD THIS
-
+      .populate("assignedTo")
       .sort({ createdAt: -1 });
 
     res.json({
       success: true,
       data: complaints,
     });
-
   } catch (err) {
     console.error("FETCH ERROR:", err);
 
@@ -96,12 +99,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 👍👎 VOTE
+/* 👍👎 VOTE */
 router.put("/:id/vote", async (req, res) => {
   try {
     const { type } = req.body;
 
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await Complaint.findById(
+      req.params.id
+    );
 
     if (!complaint) {
       return res.status(404).json({
@@ -110,8 +115,13 @@ router.put("/:id/vote", async (req, res) => {
       });
     }
 
-    if (type === "upvote") complaint.upvotes += 1;
-    if (type === "downvote") complaint.downvotes += 1;
+    if (type === "upvote") {
+      complaint.upvotes += 1;
+    }
+
+    if (type === "downvote") {
+      complaint.downvotes += 1;
+    }
 
     await complaint.save();
 
@@ -119,7 +129,6 @@ router.put("/:id/vote", async (req, res) => {
       success: true,
       data: complaint,
     });
-
   } catch (err) {
     res.status(500).json({
       success: false,
@@ -128,22 +137,86 @@ router.put("/:id/vote", async (req, res) => {
   }
 });
 
-// 🔥 ASSIGN COMPLAINT
+/* 🔥 ASSIGN COMPLAINT */
 router.put("/:id/assign", async (req, res) => {
   try {
     const { staffId } = req.body;
 
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await Complaint.findById(
+      req.params.id
+    );
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint not found",
+      });
+    }
 
     complaint.assignedTo = staffId;
-    complaint.status = "assigned";
+    complaint.status = "in-progress";
 
     await complaint.save();
 
-    res.json({ success: true, data: complaint });
+    res.json({
+      success: true,
+      data: complaint,
+    });
   } catch (err) {
-    res.status(500).json({ success: false });
+    console.error("ASSIGN ERROR:", err);
+
+    res.status(500).json({
+      success: false,
+      message: "Assignment failed",
+    });
   }
 });
+
+/* ✅ COMPLETE COMPLAINT */
+router.put(
+  "/:id/complete",
+  upload.single("proofImage"),
+  async (req, res) => {
+    try {
+      const complaint = await Complaint.findById(
+        req.params.id
+      );
+
+      if (!complaint) {
+        return res.status(404).json({
+          success: false,
+          message: "Complaint not found",
+        });
+      }
+
+      // ✅ SAVE PROOF IMAGE
+      if (req.file) {
+        complaint.proofImage = `/uploads/${req.file.filename}`;
+      }
+
+      // ✅ SAVE STAFF NOTE
+      complaint.staffRemark =
+        req.body.remark || "";
+
+      // ✅ CHANGE STATUS
+      complaint.status = "resolved";
+
+      await complaint.save();
+
+      res.json({
+        success: true,
+        message: "Complaint marked resolved",
+        data: complaint,
+      });
+    } catch (err) {
+      console.error("COMPLETE ERROR:", err);
+
+      res.status(500).json({
+        success: false,
+        message: "Error completing complaint",
+      });
+    }
+  }
+);
 
 export default router;

@@ -1,6 +1,6 @@
 import { analyzeImage } from "../services/geminiService.js";
 import fs from "fs";
-import Complaint from "../models/complaint.js";
+import Complaint from "../models/Complaint.js";
 import User from "../models/User.js";
 import { createNotification } from "../utils/createNotification.js";
 import { io } from "../server.js";

@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 import React from "react";
 import "leaflet/dist/leaflet.css";
-=======
->>>>>>> 0902883a59868b84e62e0ebbe1cd2115bba4e8d4
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Login from "./pages/Login";
@@ -14,10 +11,7 @@ import StaffDashboard from "./pages/StaffDashboard";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import ComplaintForm from "./pages/ComplaintForm";
 
-<<<<<<< HEAD
-// 🧠 Admin Dashboard
-const AdminDashboard = () => <h1>Admin Dashboard</h1>;
-=======
+
 // ✅ ADMIN PAGES
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Complaints from "./pages/admin/Complaints";
@@ -38,7 +32,6 @@ const AdminWrapper = ({ children }) => {
     </div>
   );
 };
->>>>>>> 0902883a59868b84e62e0ebbe1cd2115bba4e8d4
 
 function App() {
   useEffect(() => {
@@ -56,11 +49,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-<<<<<<< HEAD
         {/* 📝 Complaint Form */}
-=======
         {/* 📝 Complaint */}
->>>>>>> 0902883a59868b84e62e0ebbe1cd2115bba4e8d4
         <Route path="/complaintForm" element={<ComplaintForm />} />
         <Route path="/complaint/:id" element={<ComplaintDetail />} />
 
@@ -148,14 +138,11 @@ function App() {
           }
         />
 
-<<<<<<< HEAD
         {/* 🔥 DETAIL PAGE */}
         <Route path="/complaint/:id" element={<ComplaintDetail />} />
 
         {/* 🔁 Default */}
-=======
         {/* 🔁 Fallback */}
->>>>>>> 0902883a59868b84e62e0ebbe1cd2115bba4e8d4
         <Route path="*" element={<Navigate to="/login" />} />
 
       </Routes>
