@@ -1,14 +1,61 @@
 import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
-export default function ProtectedRoute({ children, role }) {
-  const { user } = useSelector((state) => state.auth);
-  console.log("USER:", user); // ✅ ADD THIS
-  if (!user) return <Navigate to="/login" />;
+/**
+ * Usage:
+ *   <ProtectedRoute role="admin">
+ *   <ProtectedRoute>
+ */
 
-  if (role && user.user.role !== role) {
-    return <Navigate to="/login" />;
+export default function ProtectedRoute({
+  children,
+  role,
+}) {
+
+  const { user } = useSelector(
+    (state) => state.auth
+  );
+
+  const location = useLocation();
+
+  // ❌ Not logged in
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location }}
+        replace
+      />
+    );
   }
 
+  // ❌ Wrong role
+  if (
+    role &&
+    user?.role &&
+    user.role !== role
+  ) {
+
+    const dashMap = {
+      admin: "/admin",
+      staff: "/staff",
+      citizen: "/citizen",
+    };
+
+    return (
+      <Navigate
+        to={
+          dashMap[user.role] ||
+          "/login"
+        }
+        replace
+      />
+    );
+  }
+
+  // ✅ Access allowed
   return children;
 }

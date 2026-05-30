@@ -1,71 +1,326 @@
-import { useState,useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { loginUser } from "../features/auth/authSlice";
-import { useNavigate, Link } from "react-router-dom";
+import {
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+
+import {
+  useDispatch,
+  useSelector,
+} from "react-redux";
+
+import {
+  loginUser,
+  googleLogin,
+  clearError,
+} from "../features/auth/authSlice";
+
+import {
+  useNavigate,
+  Link,
+  useLocation,
+} from "react-router-dom";
+
 import "./AuthPremium.css";
+
 import socket from "../socket.js";
 
+// ✅ ROLE → DASHBOARD
+const DASH = {
+  admin: "/admin",
+  staff: "/staff",
+  citizen: "/citizen",
+};
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
+  const [form, setForm] =
+    useState({
+      email: "",
+      password: "",
+    });
 
-useEffect(() => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const dispatch =
+    useDispatch();
 
-  if (user?._id) {
-    socket.emit("join", user._id);
-  }
-}, []);
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const navigate =
+    useNavigate();
 
-    const res = await dispatch(loginUser(form));
-    const role = res.payload?.user?.role;
+  const location =
+    useLocation();
 
-    setLoading(false);
+  const {
+    loading,
+    error,
+    user,
+  } = useSelector(
+    (state) => state.auth
+  );
 
-    if (role === "admin") navigate("/admin");
-    else if (role === "staff") navigate("/staff");
-    else navigate("/citizen");
-  };
+  // ✅ REDIRECT ONLY ON LOGIN/SIGNUP
+  useEffect(() => {
+
+    if (
+      user &&
+      (
+        location.pathname ===
+          "/login" ||
+
+        location.pathname ===
+          "/signup"
+      )
+    ) {
+
+      navigate(
+        DASH[user.role] ||
+          "/citizen",
+
+        { replace: true }
+      );
+    }
+
+  }, [
+    user,
+    navigate,
+    location,
+  ]);
+
+  // ✅ GOOGLE RESPONSE
+  const handleGoogleResponse =
+    useCallback(
+
+      async (response) => {
+
+        const res =
+          await dispatch(
+            googleLogin(
+              response.credential
+            )
+          );
+
+        if (
+          res.meta
+            .requestStatus ===
+          "fulfilled"
+        ) {
+
+          const {
+            role,
+            id,
+          } = res.payload.user;
+
+          socket.emit(
+            "join",
+            id
+          );
+
+          navigate(
+            DASH[role] ||
+              "/citizen",
+
+            {
+              replace: true,
+            }
+          );
+        }
+      },
+
+      [dispatch, navigate]
+    );
+
+  // ✅ MOUNT GOOGLE BUTTON
+  useEffect(() => {
+
+    if (!window.google) {
+      console.error(
+        "Google SDK not loaded"
+      );
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+
+      client_id:
+        import.meta.env
+          .VITE_GOOGLE_CLIENT_ID,
+
+      callback:
+        handleGoogleResponse,
+
+    });
+
+    window.google.accounts.id.renderButton(
+
+      document.getElementById(
+        "google-btn"
+      ),
+
+      {
+        theme: "outline",
+        size: "large",
+        width: 300,
+        text: "continue_with",
+      }
+    );
+
+  }, [handleGoogleResponse]);
+
+  // ✅ NORMAL LOGIN
+  const handleSubmit =
+    async (e) => {
+
+      e.preventDefault();
+
+      const res =
+        await dispatch(
+          loginUser(form)
+        );
+
+      if (
+        res.meta
+          .requestStatus ===
+        "fulfilled"
+      ) {
+
+        const {
+          role,
+          id,
+        } = res.payload.user;
+
+        socket.emit(
+          "join",
+          id
+        );
+
+        navigate(
+          DASH[role] ||
+            "/citizen",
+
+          { replace: true }
+        );
+      }
+    };
 
   return (
-    <div className="premium-container">
-      <form className="premium-card" onSubmit={handleSubmit}>
-        <h2>CiviTrack</h2>
-        <p className="subtitle">Welcome back</p>
 
+    <div className="premium-container">
+
+      <form
+        className="premium-card"
+        onSubmit={handleSubmit}
+      >
+
+        <h2>
+          CiviTrack
+        </h2>
+
+        <p className="subtitle">
+          Welcome back
+        </p>
+
+        {error && (
+
+          <p className="auth-error">
+            {error}
+          </p>
+
+        )}
+
+        {/* EMAIL */}
         <div className="input-group">
+
           <input
             type="email"
             required
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            value={form.email}
+            onChange={(e) => {
+
+              dispatch(
+                clearError()
+              );
+
+              setForm({
+                ...form,
+                email:
+                  e.target.value,
+              });
+            }}
           />
-          <label>Email</label>
+
+          <label>
+            Email
+          </label>
+
         </div>
 
+        {/* PASSWORD */}
         <div className="input-group">
+
           <input
             type="password"
             required
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            value={form.password}
+            onChange={(e) => {
+
+              dispatch(
+                clearError()
+              );
+
+              setForm({
+                ...form,
+                password:
+                  e.target.value,
+              });
+            }}
           />
-          <label>Password</label>
+
+          <label>
+            Password
+          </label>
+
         </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
+        {/* LOGIN BUTTON */}
+        <button
+          type="submit"
+          disabled={loading}
+        >
+
+          {loading
+            ? "Logging in..."
+            : "Login"}
+
         </button>
 
+        {/* GOOGLE */}
+        <div className="divider">
+
+          <span>
+            or
+          </span>
+
+        </div>
+
+        <div
+          id="google-btn"
+          className="google-btn-wrapper"
+        />
+
+        {/* SIGNUP */}
         <p className="switch">
-          Don’t have an account? <Link to="/signup">Signup</Link>
+
+          Don't have an account?
+
+          {" "}
+
+          <Link to="/signup">
+            Signup
+          </Link>
+
         </p>
+
       </form>
+
     </div>
   );
 }
