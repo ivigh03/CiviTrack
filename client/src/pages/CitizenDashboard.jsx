@@ -13,56 +13,81 @@ import Notifications from "../components/citizen/Notifications";
 import "../styles/citizen.css";
 
 export default function CitizenDashboard() {
+
   const dispatch = useDispatch();
 
-  // ✅ SAFE FALLBACK
-  const {
-    complaints = [],
-    loading,
-  } = useSelector((state) => state.complaints);
+  // ✅ SAFE REDUX DATA
+  const complaintsState = useSelector(
+    (state) => state.complaints
+  );
 
+  console.log(
+    "REDUX STATE:",
+    complaintsState
+  );
+
+  // ✅ IMPORTANT FIX
+  const complaints =
+    complaintsState?.complaints || [];
+
+  const loading =
+    complaintsState?.loading || false;
+
+  console.log(
+    "ALL COMPLAINTS:",
+    complaints
+  );
+
+  // ✅ ACTIVE TAB
   const [activeTab, setActiveTab] =
     useState("home");
 
+  // ✅ FILTERS
   const [filters, setFilters] = useState({
     category: "",
     area: "",
     date: "",
   });
 
-  // 🔥 FETCH DATA
+  // 🔥 FETCH COMPLAINTS
   useEffect(() => {
     dispatch(fetchComplaints());
   }, [dispatch]);
 
-  // ✅ SAFE FILTER
-  const filtered =
-    complaints?.filter((c) => {
-      return (
-        (!filters.category ||
-          c.category ===
-            filters.category) &&
+  // ✅ FILTER LOGIC
+  const filtered = complaints.filter((c) => {
 
-        (!filters.area ||
-          c.address
-            ?.toLowerCase()
-            .includes(
-              filters.area.toLowerCase()
-            )) &&
+    return (
+      (!filters.category ||
+        c.category === filters.category) &&
 
-        (!filters.date ||
-          c.createdAt?.slice(0, 10) ===
-            filters.date)
-      );
-    }) || [];
+      (!filters.area ||
+        c.address
+          ?.toLowerCase()
+          .includes(
+            filters.area.toLowerCase()
+          )) &&
 
-  // 🔥 PAGE RENDERER
+      (!filters.date ||
+        c.createdAt?.slice(0, 10) ===
+          filters.date)
+    );
+  });
+
+  console.log(
+    "FILTERED:",
+    filtered
+  );
+
+  // 🔥 PAGE RENDER
   const renderPage = () => {
+
     if (loading) {
       return <p>Loading...</p>;
     }
 
     switch (activeTab) {
+
       case "home":
         return (
           <Home complaints={complaints} />
@@ -71,7 +96,7 @@ export default function CitizenDashboard() {
       case "my":
         return (
           <MyComplaints
-            complaints={filtered}
+            complaints={complaints}
           />
         );
 
@@ -99,11 +124,12 @@ export default function CitizenDashboard() {
 
   return (
     <div className="citizen-container">
+
       <Navbar
         setActiveTab={setActiveTab}
       />
 
-      {/* 🔥 Animated Page */}
+      {/* 🔥 Animated Content */}
       <motion.div
         key={activeTab}
         initial={{
@@ -121,6 +147,7 @@ export default function CitizenDashboard() {
       >
         {renderPage()}
       </motion.div>
+
     </div>
   );
 }
