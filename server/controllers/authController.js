@@ -1,112 +1,163 @@
 import jwt from "jsonwebtoken";
-import  User  from "../models/User.js";
+import { OAuth2Client } from "google-auth-library";
+import User from "../models/User.js";
 
-// 🔑 Generate Token
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const generateToken = (user) =>
+  jwt.sign(
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
-};
 
-// 🟢 SIGNUP
-// ❗ CHANGED: removed `next` (not needed right now)
+/**
+ * Builds the standard auth payload returned to the client.
+ * Shape:  { token, user: { id, name, email, role, avatar } }
+ * This is what gets stored in Redux + localStorage.
+ */
+const buildPayload = (user) => ({
+  token: generateToken(user),
+  user: {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar || null,
+  },
+});
+
+// ─── SIGNUP ─────────────────────────────────────────────────────────────────
+
 export const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // 🔍 Check existing user
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
 
-    // 👤 Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role,
-    });
+    const user = await User.create({ name, email, password, role });
 
-    // 🔑 Token
-    const token = generateToken(user);
-
-    // ✅ RESPONSE
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      ...buildPayload(user),
     });
-
   } catch (err) {
-    // ❗ CHANGED: removed next(err)
-    // ✅ Direct error response (simpler & safe)
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 🔵 LOGIN
-// ❗ CHANGED: removed `next`
+// ─── LOGIN ───────────────────────────────────────────────────────────────────
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 🔍 Check user
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    // Google-only accounts have no password
+    if (!user.password) {
       return res.status(400).json({
         success: false,
-        message: "Invalid credentials",
+        message: "This account uses Google Sign-In. Please continue with Google.",
       });
     }
 
-    // 🔐 Compare password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials" });
     }
 
-    // 🔑 Token
-    const token = generateToken(user);
-
-    // ✅ RESPONSE
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      ...buildPayload(user),
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─── GOOGLE AUTH ─────────────────────────────────────────────────────────────
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body; // ID token from Google
+
+    if (!credential) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Google credential missing" });
+    }
+
+    // Verify the Google ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-  } catch (err) {
-    // ❗ CHANGED: removed next(err)
-    res.status(500).json({
-      success: false,
-      message: err.message,
+    const { name, email, picture, sub: googleId } = ticket.getPayload();
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Existing user — update Google fields if not set
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.avatar = user.avatar || picture;
+        await user.save();
+      }
+    } else {
+      // New user — create with Google info, no password
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar: picture,
+        role: "citizen", // default role for Google signups
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      ...buildPayload(user),
     });
+  } catch (err) {
+    console.error("Google auth error:", err.message);
+    res
+      .status(500)
+      .json({ success: false, message: "Google authentication failed" });
+  }
+};
+
+// ─── GET ME (refresh user data) ──────────────────────────────────────────────
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res.status(200).json({ success: true, user: buildPayload(user).user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

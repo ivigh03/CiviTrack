@@ -21,12 +21,23 @@ function ComplaintForm() {
   const navigate = useNavigate();
 
   // ✅ LOGGED IN USER
-const authData = useSelector(
+const { user } = useSelector(
   (state) => state.auth
 );
 
-const user =
-  authData?.user?.user;
+// ✅ CURRENT USER ID
+const currentUserId =
+  user?.id || user?._id;
+
+console.log(
+  "CURRENT USER:",
+  user
+);
+
+console.log(
+  "CURRENT USER ID:",
+  currentUserId
+);
 
   const [image, setImage] =
     useState(null);
@@ -190,8 +201,7 @@ const user =
 
     // ✅ GET USER ID
     const userId =
-    user?.id ||
-    user?._id;
+      currentUserId;
 
 
     console.log(
@@ -200,6 +210,10 @@ const user =
     );
 
     if (!userId) {
+
+    console.log("AUTH DATA:", authData);
+    console.log("USER:", user);
+    console.log("USER ID:", userId);
 
       alert(
         "User not found. Please login again."
@@ -210,13 +224,16 @@ const user =
 
     // ✅ SEND USER
     formData.append(
-      "user",
+      "user", 
       String(userId)
     );
 
     // ✅ GET TOKEN
-    const token =
-    localStorage.getItem("token");
+    const authData = JSON.parse(
+      localStorage.getItem("auth")
+    );
+
+    const token = authData?.token;
 
     console.log("USER:", user);
     console.log("USER ID:", userId);
