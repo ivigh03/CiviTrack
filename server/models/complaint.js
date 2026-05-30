@@ -22,6 +22,29 @@ const complaintSchema = new mongoose.Schema(
 
     // 🚨 Severity
     severity: String,
+    assignmentHistory: [
+  {
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    action: {
+      type: String,
+      enum: ["assigned", "reassigned"],
+    },
+
+    assignedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+],
 
     // 🎯 Priority
     priority: {
@@ -110,6 +133,7 @@ const complaintSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+  
 );
 
 export default mongoose.model(

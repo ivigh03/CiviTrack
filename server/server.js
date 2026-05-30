@@ -30,6 +30,9 @@ const io = new Server(server, {
   },
 });
 
+setIO(io);
+console.log("✅ Socket.IO initialized");
+
 // ✅ SOCKET CONNECTION
 io.on("connection", (socket) => {
   console.log("🔌 User connected:", socket.id);
