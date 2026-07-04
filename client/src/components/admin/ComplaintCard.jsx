@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { UPLOADS_BASE_URL } from "../../api/axios";
 const ComplaintCard = ({ complaint }) => {
   const navigate = useNavigate();
   const getBorderColor = () => {
@@ -13,6 +14,14 @@ const ComplaintCard = ({ complaint }) => {
       onClick={() => navigate(`/admin/complaints/${complaint._id}`)}
       className="bg-white text-black rounded-lg shadow-md p-4 border-l-4 cursor-pointer hover:scale-105 transition"
     >
+      {complaint.image && (
+        <img
+          src={`${UPLOADS_BASE_URL}${complaint.image}`}
+          alt={complaint.title}
+          className="w-full h-36 object-cover rounded-md mb-3"
+        />
+      )}
+
       {/* TITLE */}
       <h2 className="font-semibold text-lg text-green-600">
         {complaint.title}

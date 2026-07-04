@@ -5,11 +5,14 @@ import { Provider } from "react-redux";
 import { store } from "./app/store";
 import "./index.css";
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
-    <NotificationProvider>
-    <App />
-    </NotificationProvider>
-  </Provider>
+  <ThemeProvider>
+    <Provider store={store}>
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
+    </Provider>
+  </ThemeProvider>
 );

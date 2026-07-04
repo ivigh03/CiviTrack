@@ -15,6 +15,8 @@ import {
 import ComplaintCard
 from "../../components/admin/ComplaintCard";
 
+import axios from "../../api/axios";
+
 const Complaints = () => {
 
   const dispatch =
@@ -36,6 +38,23 @@ const Complaints = () => {
     setStatusFilter,
   ] = useState("ALL");
 
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  const handleExportCSV = async () => {
+    const res = await axios.get("/admin/complaints/export", {
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "complaints.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   // 🔥 FETCH
   useEffect(() => {
 
@@ -56,6 +75,10 @@ const Complaints = () => {
   }
 
   // 🔍 FILTER
+  const categories = [
+    ...new Set(complaints.map((c) => c.category).filter(Boolean)),
+  ];
+
   const filtered =
     complaints
 
@@ -72,6 +95,12 @@ const Complaints = () => {
           ? true
           : c.status ===
             statusFilter
+      )
+
+      .filter((c) =>
+        categoryFilter === "ALL"
+          ? true
+          : c.category === categoryFilter
       );
 
   return (
@@ -120,6 +149,19 @@ const Complaints = () => {
 
         </select>
 
+        <select
+          className="border p-2 rounded"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <option value="ALL">All Categories</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+
         <button className="bg-blue-500 text-white px-4 py-2 rounded">
           Search
         </button>
@@ -133,10 +175,19 @@ const Complaints = () => {
               "ALL"
             );
 
+            setCategoryFilter("ALL");
+
           }}
           className="bg-purple-100 text-purple-600 px-4 py-2 rounded"
         >
           Clear
+        </button>
+
+        <button
+          onClick={handleExportCSV}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          Export CSV
         </button>
 
       </div>

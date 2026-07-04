@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import path from "path";
+import jwt from "jsonwebtoken";
 
 import { setIO } from "./socket.js";
 
@@ -25,10 +26,15 @@ const app = express();
 /* ✅ CREATE HTTP SERVER */
 const server = http.createServer(app);
 
+/* ✅ ALLOWED CLIENT ORIGINS */
+const ALLOWED_ORIGINS = process.env.CLIENT_URL
+  ? [process.env.CLIENT_URL]
+  : ["http://localhost:5173", "http://localhost:5174"];
+
 /* ✅ SOCKET.IO SETUP */
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ALLOWED_ORIGINS,
     credentials: true,
   },
 });
@@ -44,13 +50,20 @@ io.on("connection", (socket) => {
     socket.id
   );
 
-  socket.on("join", (userId) => {
+  socket.on("join", ({ token } = {}) => {
 
-    socket.join(userId);
+    if (!token) return;
 
-    console.log(
-      `✅ User joined room ${userId}`
-    );
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.join(decoded.id);
+
+      console.log(
+        `✅ User joined room ${decoded.id}`
+      );
+    } catch (err) {
+      console.error("SOCKET JOIN ERROR:", err.message);
+    }
 
   });
 
@@ -65,7 +78,7 @@ io.on("connection", (socket) => {
 });
 
 /* 📦 MIDDLEWARE */
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 
 app.use(express.json());
 
