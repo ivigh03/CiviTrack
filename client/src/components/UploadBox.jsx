@@ -1,5 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
+import { toast } from "sonner";
+import { ImagePlus, Sparkles } from "lucide-react";
+import Button from "./ui/Button";
 
 export default function UploadBox({
   setResult,
@@ -37,7 +40,7 @@ export default function UploadBox({
 
     if (!file) {
 
-      return alert(
+      return toast.error(
         "Upload image first"
       );
     }
@@ -66,15 +69,10 @@ export default function UploadBox({
       const token =
         authData?.token;
 
-      console.log(
-        "TOKEN:",
-        token
-      );
-
       // ❌ NO TOKEN
       if (!token) {
 
-        alert(
+        toast.error(
           "Please login again"
         );
 
@@ -101,16 +99,13 @@ export default function UploadBox({
           }
         );
 
-      console.log(
-        "AI RESULT:",
-        res.data
-      );
-
       // ✅ SAVE RESULT
       setResult({
         ...res.data.data,
         file,
       });
+
+      toast.success("Image analyzed!");
 
     } catch (err) {
 
@@ -120,7 +115,7 @@ export default function UploadBox({
         err.message
       );
 
-      alert(
+      toast.error(
 
         err.response?.data
           ?.message ||
@@ -137,41 +132,47 @@ export default function UploadBox({
 
   return (
 
-    <div className="upload-box">
+    <div className="rounded-xl border border-dashed border-border bg-elevated/50 p-5">
 
-      {/* 📂 FILE INPUT */}
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) =>
-          handleFile(
-            e.target.files[0]
-          )
-        }
-      />
+      <label className="flex cursor-pointer flex-col items-center gap-2 text-center">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <ImagePlus className="h-5 w-5" />
+        </div>
+        <span className="text-sm font-medium text-foreground">
+          {file ? file.name : "Click to upload an image"}
+        </span>
+        <span className="text-xs text-muted">PNG, JPG up to a few MB</span>
 
-      {/* 🖼️ PREVIEW */}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) =>
+            handleFile(
+              e.target.files[0]
+            )
+          }
+        />
+      </label>
+
       {preview && (
-
         <img
           src={preview}
           alt="preview"
-          className="preview-image"
+          className="mt-4 h-48 w-full rounded-lg object-cover"
         />
-
       )}
 
-      {/* 🧠 BUTTON */}
-      <button
-        className="analyze-btn"
+      <Button
+        type="button"
         onClick={handleUpload}
+        loading={loading}
+        variant="secondary"
+        className="mt-4 w-full"
       >
-
-        {loading
-          ? "Analyzing..."
-          : "Analyze Image"}
-
-      </button>
+        <Sparkles className="h-4 w-4" />
+        {loading ? "Analyzing..." : "Analyze Image"}
+      </Button>
 
     </div>
   );

@@ -1,10 +1,6 @@
 import { analyzeImage } from "../services/geminiService.js";
 import fs from "fs";
 import Complaint from "../models/Complaint.js";
-import User from "../models/User.js";
-import { createNotification } from "../utils/createNotification.js";
-import { getIO } from "../socket.js";
-import Notification from "../models/Notification.js";
 
 export const analyzeComplaintImage = async (req, res) => {
 
@@ -81,78 +77,13 @@ export const analyzeComplaintImage = async (req, res) => {
       };
     }
 
-    // ✅ CREATE COMPLAINT
-    const complaint =
-      await Complaint.create({
-
-        title:
-          parsed.title,
-
-        category:
-          parsed.category,
-
-        userDescription:
-          parsed.description,
-
-        severity:
-          parsed.severity,
-
-        image:
-          `/uploads/${req.file.filename}`,
-
-        address:
-          req.body.address || "Unknown Address",
-
-        user:
-          req.user._id,
-
-        status:
-          "pending",
-      });
-
-    // ✅ NOTIFY ADMINS
-    const admins =
-      await User.find({
-        role: "admin",
-      });
-
-    for (const admin of admins) {
-
-      const notification = {
-
-        message:
-          `New complaint at ${complaint.address}`,
-
-        type:
-          "complaint",
-
-        complaint:
-          complaint._id,
-
-        user:
-          admin._id,
-      };
-
-      await createNotification(
-        notification
-      );
-
-      // ✅ REALTIME SOCKET
-      getIO()
-        .to(admin._id.toString())
-        .emit(
-          "newNotification",
-          notification
-        );
-    }
-
+    // ✅ Return the AI suggestion only — the real Complaint document is
+    // created later by the actual submit (POST /api/complaints), not here.
     res.json({
 
       success: true,
 
       data: parsed,
-
-      complaint,
     });
 
   } catch (error) {
@@ -172,5 +103,29 @@ export const analyzeComplaintImage = async (req, res) => {
         error.message ||
         "Image analysis failed",
     });
+  }
+};
+
+// 🗺️ Lightweight lat/lng feed for heatmaps
+export const getComplaintLocations = async (req, res) => {
+  try {
+    const complaints = await Complaint.find({}, "location severity status");
+
+    const data = complaints
+      .filter(
+        (c) =>
+          c.location &&
+          typeof c.location.lat === "number" &&
+          typeof c.location.lng === "number"
+      )
+      .map((c) => ({
+        lat: c.location.lat,
+        lng: c.location.lng,
+        severity: c.severity,
+      }));
+
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

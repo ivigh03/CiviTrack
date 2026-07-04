@@ -64,7 +64,7 @@ export default function ComplaintList({
       // ✅ remark
       formData.append(
         "remark",
-        proof.remark || ""
+        proof.note || ""
       );
 
       // ✅ backend update

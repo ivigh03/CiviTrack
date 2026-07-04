@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import WelcomeSplash from "./pages/WelcomeSplash";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import CitizenDashboard from "./pages/CitizenDashboard";
@@ -22,6 +23,11 @@ import Notifications from "./pages/admin/Notifcations";
 import socket from "./socket";
 // ✅ NAVBAR
 import Navbar from "./components/admin/Navbar";
+
+// ✨ Design system
+import AppToaster from "./components/ui/Toast";
+import CommandPalette from "./components/ui/CommandPalette";
+import { TooltipProvider } from "./components/ui/Tooltip";
 
 // ✅ Wrapper
 const AdminWrapper = ({ children }) => {
@@ -43,11 +49,24 @@ function App() {
 }, []);
   return (
     <BrowserRouter>
-      <Routes>
+      <TooltipProvider>
+        <AppToaster />
+        <CommandPalette />
+        <Routes>
 
         {/* 🔓 Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* 👋 Post-login landing page */}
+        <Route
+          path="/welcome"
+          element={
+            <ProtectedRoute>
+              <WelcomeSplash />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 📝 Complaint Form */}
         {/* 📝 Complaint */}
@@ -138,9 +157,6 @@ function App() {
           }
         />
 
-        {/* 🔥 DETAIL PAGE */}
-        <Route path="/complaint/:id" element={<ComplaintDetail />} />
-
         {/* 🔁 Default */}
         {/* 🔁 Fallback */}
 {/* HOME */}
@@ -155,7 +171,8 @@ function App() {
   element={<Navigate to="/" />}
 />
 
-      </Routes>
+        </Routes>
+      </TooltipProvider>
     </BrowserRouter>
   );
 }

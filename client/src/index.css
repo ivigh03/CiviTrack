@@ -1,3 +1,126 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+   Design tokens — space-separated RGB triples so Tailwind's
+   `rgb(var(--x) / <alpha-value>)` pattern supports opacity
+   modifiers (e.g. bg-primary/50).
+   ============================================================ */
+
+:root,
+:root[data-theme="dark"] {
+  --color-background: 10 12 20;
+  --color-surface: 17 20 32;
+  --color-elevated: 26 30 46;
+  --color-overlay: 12 14 22;
+  --color-foreground: 237 239 245;
+  --color-muted: 148 155 175;
+  --color-border: 255 255 255;
+  --border-opacity: 0.08;
+
+  --color-primary: 129 118 255;
+  --color-primary-hover: 148 138 255;
+  --color-primary-muted: 99 102 241;
+  --color-primary-foreground: 255 255 255;
+
+  --color-success: 52 211 153;
+  --color-warning: 251 191 36;
+  --color-danger: 248 113 113;
+  --color-info: 96 165 250;
+
+  --shadow-ambient: 0 0 0 / 0.45;
+}
+
+:root[data-theme="light"] {
+  --color-background: 246 247 251;
+  --color-surface: 255 255 255;
+  --color-elevated: 255 255 255;
+  --color-overlay: 255 255 255;
+  --color-foreground: 23 25 35;
+  --color-muted: 100 107 128;
+  --color-border: 15 23 42;
+  --border-opacity: 0.08;
+
+  --color-primary: 99 91 255;
+  --color-primary-hover: 79 70 229;
+  --color-primary-muted: 129 118 255;
+  --color-primary-foreground: 255 255 255;
+
+  --color-success: 16 163 108;
+  --color-warning: 217 119 6;
+  --color-danger: 220 38 38;
+  --color-info: 37 99 235;
+
+  --shadow-ambient: 15 23 42 / 0.12;
+}
+
+* {
+  border-color: rgb(var(--color-border) / var(--border-opacity));
+}
+
+html,
+body {
+  background-color: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ============================================================
+   Glassmorphism utility — single source of truth, replaces the
+   per-file `backdrop-filter: blur(...)` declarations scattered
+   across citizen.css / staff.css / AuthPremium.css / detail.css.
+   ============================================================ */
+
+.glass {
+  background-color: rgb(var(--color-surface) / 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgb(var(--color-border) / var(--border-opacity));
+}
+
+/* ============================================================
+   Custom scrollbars, theme-aware via the same tokens.
+   ============================================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-muted) / 0.4) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--color-muted) / 0.35);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--color-muted) / 0.55);
+  background-clip: content-box;
+}
+
+/* Respect reduced-motion preferences globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

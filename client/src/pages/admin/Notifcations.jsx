@@ -1,113 +1,19 @@
-import { useEffect, useState } from "react";
-import axios from "../../api/axios";
-import socket from "../../socket";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNotifications } from "../../context/NotificationContext";
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([]);
+  const { notifications, markAsRead, clearAll } = useNotifications();
   const navigate = useNavigate();
 
-  // Load notifications
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
-    try {
-      const res = await axios.get("/admin/notifications");
-
-      const data = res.data || [];
-
-      setNotifications(data);
-
-      // Mark all read AFTER fetching
-      if (data.length > 0) {
-        await axios.put("/admin/notifications/read-all");
-
-        setNotifications(
-          data.map((n) => ({
-            ...n,
-            read: true,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Real-time socket notifications
-  useEffect(() => {
-    const handleNotification = (data) => {
-      console.log("🔥 PAGE RECEIVED:", data);
-
-      setNotifications((prev) => [
-        {
-          _id: Date.now(),
-          message: data.message,
-          createdAt: new Date(),
-          read: false,
-          complaint: data.complaint,
-        },
-        ...prev,
-      ]);
-    };
-
-    socket.on("newNotification", handleNotification);
-
-    return () => {
-      socket.off("newNotification", handleNotification);
-    };
-  }, []);
-
-  // Mark single notification read
-  const markAsRead = async (id) => {
-    try {
-      await axios.put(`/admin/notifications/${id}/read`);
-
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n._id === id
-            ? { ...n, read: true }
-            : n
-        )
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Mark all notifications read
-  const markAllRead = async () => {
-    try {
-      await axios.put("/admin/notifications/read-all");
-
-      setNotifications((prev) =>
-        prev.map((n) => ({
-          ...n,
-          read: true,
-        }))
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Clear all notifications
-  const clearAll = async () => {
+  const handleClear = () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete all notifications?"
     );
 
     if (!confirmed) return;
 
-    try {
-      await axios.delete("/admin/notifications");
-
-      setNotifications([]);
-    } catch (err) {
-      console.error(err);
-    }
+    clearAll();
   };
 
   return (
@@ -120,10 +26,8 @@ const Notifications = () => {
 
         <div className="flex gap-3">
 
-         
-
           <button
-            onClick={clearAll}
+            onClick={handleClear}
             disabled={notifications.length === 0}
             className={`px-4 py-2 rounded-lg font-medium transition ${
               notifications.length === 0
@@ -147,48 +51,55 @@ const Notifications = () => {
             </p>
           </div>
         ) : (
-          notifications.map((n) => (
-            <div
-              key={n._id}
-              onClick={() => {
-                markAsRead(n._id);
+          <AnimatePresence initial={false}>
+            {notifications.map((n, i) => (
+              <motion.div
+                key={n._id}
+                layout
+                initial={{ opacity: 0, x: -20, backgroundColor: "rgba(59,130,246,0.35)" }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.35, delay: i * 0.03 }}
+                onClick={() => {
+                  markAsRead(n._id);
 
-                if (n.complaint) {
-                  const complaintId =
-                    typeof n.complaint === "object"
-                      ? n.complaint._id
-                      : n.complaint;
+                  if (n.complaint) {
+                    const complaintId =
+                      typeof n.complaint === "object"
+                        ? n.complaint._id
+                        : n.complaint;
 
-                  navigate(
-                    `/admin/complaints/${complaintId}`
-                  );
-                }
-              }}
-              className={`p-4 rounded-lg shadow cursor-pointer flex justify-between items-center transition ${
-                n.read
-                  ? "bg-[#1e293b]"
-                  : "bg-[#334155] border-l-4 border-blue-500"
-              }`}
-            >
-              <div>
-                <p className="text-sm font-medium">
-                  {n.message}
-                </p>
+                    navigate(
+                      `/admin/complaints/${complaintId}`
+                    );
+                  }
+                }}
+                className={`p-4 rounded-lg shadow cursor-pointer flex justify-between items-center transition ${
+                  n.read
+                    ? "bg-[#1e293b]"
+                    : "bg-[#334155] border-l-4 border-blue-500"
+                }`}
+              >
+                <div>
+                  <p className="text-sm font-medium">
+                    {n.message}
+                  </p>
 
-                <p className="text-xs text-gray-400 mt-1">
-                  {new Date(
-                    n.createdAt
-                  ).toLocaleString()}
-                </p>
-              </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {new Date(
+                      n.createdAt
+                    ).toLocaleString()}
+                  </p>
+                </div>
 
-              {!n.read && (
-                <span className="text-xs bg-blue-500 px-2 py-1 rounded">
-                  NEW
-                </span>
-              )}
-            </div>
-          ))
+                {!n.read && (
+                  <span className="text-xs bg-blue-500 px-2 py-1 rounded">
+                    NEW
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
 
       </div>

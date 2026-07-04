@@ -6,6 +6,12 @@ export const getAllComplaints = async () => {
   return res.data.data; // ⚠️ important
 };
 
+// 🔥 Get lightweight lat/lng feed for the heatmap
+export const getComplaintLocations = async () => {
+  const res = await API.get("/complaints/locations");
+  return res.data.data;
+};
+
 export const completeComplaint = async (id, formData) => {
   const res = await API.put(
     `/complaints/${id}/complete`,

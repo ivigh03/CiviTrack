@@ -3,6 +3,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { DASHBOARD_PATH } from "../constants/roles";
 
 /**
  * Usage:
@@ -39,16 +40,10 @@ export default function ProtectedRoute({
     user.role !== role
   ) {
 
-    const dashMap = {
-      admin: "/admin",
-      staff: "/staff",
-      citizen: "/citizen",
-    };
-
     return (
       <Navigate
         to={
-          dashMap[user.role] ||
+          DASHBOARD_PATH[user.role] ||
           "/login"
         }
         replace
