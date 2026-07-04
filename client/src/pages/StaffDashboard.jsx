@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { LogOut, PartyPopper, Sun, Moon } from "lucide-react";
 
 import OverviewCards from "../components/staff/OverviewCards";
 import ComplaintList from "../components/staff/ComplaintList";
 import Notifications from "../components/staff/Notifications";
+import Button from "../components/ui/Button";
+import EmptyState from "../components/ui/EmptyState";
+import { SkeletonCard } from "../components/ui/Skeleton";
+import { useTheme } from "../context/ThemeContext";
 
 import { getAllComplaints } from "../api/complaintApi";
-
-import "../styles/staff.css";
 
 export default function StaffDashboard() {
 
@@ -22,6 +25,8 @@ export default function StaffDashboard() {
   const { user } = useSelector(
     (state) => state.auth
   );
+
+  const { theme, toggleTheme } = useTheme();
 
   // ✅ SUPPORT BOTH STRUCTURES
   const loggedInUserId =
@@ -59,11 +64,6 @@ export default function StaffDashboard() {
       const data =
         await getAllComplaints();
 
-      console.log(
-        "ALL COMPLAINTS:",
-        data
-      );
-
       setComplaints(data);
 
     } catch (err) {
@@ -88,30 +88,6 @@ export default function StaffDashboard() {
     }
 
   }, [user]);
-
-  // 🧪 DEBUG
-  useEffect(() => {
-
-    console.log(
-      "LOGGED IN USER:",
-      user
-    );
-
-    console.log(
-      "USER ID:",
-      loggedInUserId
-    );
-
-    console.log(
-      "FULL COMPLAINTS DATA:",
-      complaints
-    );
-
-  }, [
-    complaints,
-    user,
-    loggedInUserId,
-  ]);
 
   // ✅ FILTER STAFF COMPLAINTS
   const activeComplaints =
@@ -148,47 +124,49 @@ export default function StaffDashboard() {
 
   return (
 
-    <div className="staff-container">
+    <div className="min-h-screen bg-background">
 
       {/* 🧭 Navbar */}
-      <div className="staff-navbar">
+      <div className="flex items-center justify-between border-b border-border bg-surface/80 px-4 py-3 backdrop-blur-md sm:px-8">
 
-        <h2>CiviTrack</h2>
+        <h2 className="text-lg font-semibold text-foreground">CiviTrack</h2>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "15px",
-          }}
-        >
+        <div className="flex items-center gap-3">
 
-          <span>Staff Panel</span>
+          <span className="hidden text-sm text-muted sm:inline">Staff Panel</span>
+
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="rounded-lg p-2 text-muted transition-colors hover:bg-elevated hover:text-foreground"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
 
           {/* ✅ LOGOUT BUTTON */}
-          <button
-            onClick={handleLogout}
-            className="logout-btn"
-          >
+          <Button variant="danger" size="sm" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
             Logout
-          </button>
+          </Button>
 
         </div>
 
       </div>
 
       {/* 📦 CONTENT */}
-      <div className="staff-content">
+      <div className="px-4 py-6 sm:px-8">
 
-        <h1>
+        <h1 className="mb-6 text-xl font-semibold text-foreground">
           Staff Dashboard
         </h1>
 
         {loading ? (
 
-          <p>
-            Loading complaints...
-          </p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
 
         ) : (
 
@@ -202,22 +180,22 @@ export default function StaffDashboard() {
             />
 
             {/* 🔔 NOTIFICATIONS */}
-            <Notifications />
+            <div className="mt-8">
+              <Notifications />
+            </div>
 
             {/* 📋 WORK */}
-            <h2
-              style={{
-                marginTop: "30px",
-              }}
-            >
+            <h2 className="mb-4 mt-8 text-lg font-semibold text-foreground">
               Assigned Work
             </h2>
 
             {activeComplaints.length === 0 ? (
 
-              <p>
-                No active complaints 🎉
-              </p>
+              <EmptyState
+                icon={PartyPopper}
+                title="No active complaints"
+                description="You're all caught up — nothing assigned to you right now."
+              />
 
             ) : (
 
