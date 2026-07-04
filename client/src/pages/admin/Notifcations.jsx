@@ -1,9 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bell, BellOff } from "lucide-react";
 import { useNotifications } from "../../context/NotificationContext";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import EmptyState from "../../components/ui/EmptyState";
 
 const Notifications = () => {
-  const { notifications, markAsRead, clearAll } = useNotifications();
+  const { notifications, markAsRead, markAllRead, clearAll } = useNotifications();
   const navigate = useNavigate();
 
   const handleClear = () => {
@@ -17,92 +21,73 @@ const Notifications = () => {
   };
 
   return (
-    <div className="text-white">
-
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">
-          🔔 Notifications
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+          <Bell className="h-5 w-5 text-primary" />
+          Notifications
         </h1>
 
-        <div className="flex gap-3">
-
-          <button
-            onClick={handleClear}
-            disabled={notifications.length === 0}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              notifications.length === 0
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-red-500 hover:bg-red-600"
-            }`}
-          >
-            🗑 Clear All
-          </button>
-
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={markAllRead} disabled={notifications.length === 0}>
+            Mark all read
+          </Button>
+          <Button variant="danger" size="sm" onClick={handleClear} disabled={notifications.length === 0}>
+            Clear All
+          </Button>
         </div>
       </div>
 
-      <div className="space-y-3">
-
-        {notifications.length === 0 ? (
-          <div className="bg-[#1e293b] rounded-xl p-10 text-center">
-            <p className="text-4xl mb-3">🎉</p>
-            <p className="text-gray-400 text-lg">
-              No notifications available
-            </p>
-          </div>
-        ) : (
+      {notifications.length === 0 ? (
+        <EmptyState icon={BellOff} title="No notifications available" description="You're all caught up." />
+      ) : (
+        <div className="space-y-3">
           <AnimatePresence initial={false}>
             {notifications.map((n, i) => (
               <motion.div
                 key={n._id}
                 layout
-                initial={{ opacity: 0, x: -20, backgroundColor: "rgba(59,130,246,0.35)" }}
+                initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.35, delay: i * 0.03 }}
+                transition={{ duration: 0.3, delay: i * 0.03 }}
                 onClick={() => {
                   markAsRead(n._id);
 
                   if (n.complaint) {
                     const complaintId =
-                      typeof n.complaint === "object"
-                        ? n.complaint._id
-                        : n.complaint;
+                      typeof n.complaint === "object" ? n.complaint._id : n.complaint;
 
-                    navigate(
-                      `/admin/complaints/${complaintId}`
-                    );
+                    navigate(`/admin/complaints/${complaintId}`);
                   }
                 }}
-                className={`p-4 rounded-lg shadow cursor-pointer flex justify-between items-center transition ${
-                  n.read
-                    ? "bg-[#1e293b]"
-                    : "bg-[#334155] border-l-4 border-blue-500"
-                }`}
               >
-                <div>
-                  <p className="text-sm font-medium">
-                    {n.message}
-                  </p>
+                <Card
+                  padding="sm"
+                  className={`flex cursor-pointer items-center justify-between gap-3 transition-colors hover:border-primary/40 ${
+                    !n.read ? "border-l-4 border-l-primary" : ""
+                  }`}
+                >
+                  <div>
+                    <p className={`text-sm ${n.read ? "text-muted" : "font-medium text-foreground"}`}>
+                      {n.message}
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      {new Date(n.createdAt).toLocaleString()}
+                    </p>
+                  </div>
 
-                  <p className="text-xs text-gray-400 mt-1">
-                    {new Date(
-                      n.createdAt
-                    ).toLocaleString()}
-                  </p>
-                </div>
-
-                {!n.read && (
-                  <span className="text-xs bg-blue-500 px-2 py-1 rounded">
-                    NEW
-                  </span>
-                )}
+                  {!n.read && (
+                    <span className="shrink-0 rounded-full bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+                      NEW
+                    </span>
+                  )}
+                </Card>
               </motion.div>
             ))}
           </AnimatePresence>
-        )}
-
-      </div>
+        </div>
+      )}
     </div>
   );
 };

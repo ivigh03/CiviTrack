@@ -32,9 +32,9 @@ import { TooltipProvider } from "./components/ui/Tooltip";
 // ✅ Wrapper
 const AdminWrapper = ({ children }) => {
   return (
-    <div className="min-h-screen bg-[#0f172a]">
+    <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="p-6">{children}</div>
+      <div className="p-4 sm:p-6 lg:p-8">{children}</div>
     </div>
   );
 };

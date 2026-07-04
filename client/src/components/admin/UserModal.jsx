@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { Trash2, ShieldOff, ShieldCheck } from "lucide-react";
 import axios from "../../api/axios";
+import Modal from "../ui/Modal";
+import Select from "../ui/Select";
+import Button from "../ui/Button";
+import Badge from "../ui/Badge";
 
 const UserModal = ({ user, onClose, refresh }) => {
   const [role, setRole] = useState(user.role);
@@ -24,86 +28,68 @@ const UserModal = ({ user, onClose, refresh }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 10 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white text-black rounded-xl p-6 w-[400px]"
-      >
+    <Modal open onOpenChange={(open) => !open && onClose()} title="User Details">
+      <div className="space-y-2 text-sm">
+        <p className="text-foreground">
+          <span className="text-muted">Name:</span> {user.name}
+        </p>
+        <p className="text-foreground">
+          <span className="text-muted">Email:</span> {user.email}
+        </p>
 
-        <h2 className="text-xl font-bold mb-4 text-black">User Details</h2>
+        {user.role === "citizen" && (
+          <p className="text-foreground">
+            <span className="text-muted">Complaints Raised:</span> {user.complaintsCount}
+          </p>
+        )}
 
-<p className="text-black"><b>Name:</b> {user.name}</p>
-<p className="text-black"><b>Email:</b> {user.email}</p>
-{user.role === "citizen" && (
-  <p className="text-black">
-    <b>Complaints Raised:</b> {user.complaintsCount}
-  </p>
-)}
+        {user.role === "staff" && (
+          <p className="text-foreground">
+            <span className="text-muted">Complaints Resolved:</span> {user.complaintsCount}
+          </p>
+        )}
 
-{user.role === "staff" && (
-  <p className="text-black">
-    <b>Complaints Resolved:</b> {user.complaintsCount}
-  </p>
-)}
+        {user.isBlocked && <Badge variant="danger">Blocked</Badge>}
+      </div>
 
-        {/* ROLE CHANGE */}
-        <div className="mt-4">
-          <label className="block mb-1 font-semibold">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full border p-2 rounded"
+      {/* ROLE CHANGE */}
+      <div className="mt-4">
+        <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="admin">Admin</option>
+          <option value="staff">Staff</option>
+          <option value="citizen">Citizen</option>
+        </Select>
+      </div>
+
+      {/* ACTIONS */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-2">
+          <Button variant="danger" size="sm" onClick={handleDelete}>
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </Button>
+
+          <Button
+            size="sm"
+            variant={user.isBlocked ? "secondary" : "outline"}
+            className={!user.isBlocked ? "border-warning/40 text-warning hover:bg-warning hover:text-white" : ""}
+            onClick={handleToggleBlock}
           >
-            <option value="admin">Admin</option>
-            <option value="staff">Staff</option>
-            <option value="citizen">Citizen</option>
-          </select>
+            {user.isBlocked ? <ShieldCheck className="h-3.5 w-3.5" /> : <ShieldOff className="h-3.5 w-3.5" />}
+            {user.isBlocked ? "Unblock" : "Block"}
+          </Button>
         </div>
 
-        {/* ACTIONS */}
-        <div className="flex justify-between mt-6">
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded">
-              Delete
-            </button>
-
-            <button
-              onClick={handleToggleBlock}
-              className={`px-4 py-2 rounded text-white ${
-                user.isBlocked ? "bg-green-600" : "bg-yellow-600"
-              }`}>
-              {user.isBlocked ? "Unblock" : "Block"}
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="bg-gray-400 text-black px-4 py-2 rounded">
-              Cancel
-            </button>
-
-            <button
-              onClick={handleUpdate}
-              className="bg-indigo-500 text-white px-4 py-2 rounded">
-              Save
-            </button>
-          </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleUpdate}>
+            Save
+          </Button>
         </div>
-
-      </motion.div>
-    </motion.div>
+      </div>
+    </Modal>
   );
 };
 
