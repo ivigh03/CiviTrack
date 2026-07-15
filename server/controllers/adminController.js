@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import { createNotification } from "../utils/createNotification.js";
 import Notification from "../models/Notification.js";
 import { getIO } from "../socket.js";
+import { applyEscalation } from "../utils/checkEscalation.js";
 export const getNotifications = async (req, res) => {
   try {
     if (!req.user) {
@@ -29,6 +30,13 @@ export const getNotifications = async (req, res) => {
 
 export const getDashboard = async (req, res) => {
   try {
+    // ⚠ Escalate any overdue complaints before computing stats
+    const candidates = await Complaint.find({
+      escalated: false,
+      status: { $in: ["pending", "assigned", "in-progress"] },
+    });
+    await applyEscalation(candidates);
+
     // ✅ Stats
     const total = await Complaint.countDocuments();
 
@@ -57,8 +65,17 @@ export const getDashboard = async (req, res) => {
       count: c.count,
     }));
 
-    // ✅ TIMELINE CHART (last 7 days)
+    // ✅ TIMELINE CHART (last 7 days, sorted, zero-filled)
+    // Note: $dateToString defaults to UTC day boundaries, so all date math
+    // here uses UTC methods to stay consistent with the aggregation below —
+    // mixing in local-time Date methods causes an off-by-one on non-UTC servers.
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const sevenDaysAgo = new Date(todayUTC);
+    sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 6);
+
     const timelineData = await Complaint.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
       {
         $group: {
           _id: {
@@ -67,12 +84,20 @@ export const getDashboard = async (req, res) => {
           count: { $sum: 1 },
         },
       },
+      { $sort: { _id: 1 } },
     ]);
 
-    const timeline = timelineData.map((t) => ({
-      date: t._id,
-      count: t.count,
-    }));
+    const countsByDate = Object.fromEntries(
+      timelineData.map((t) => [t._id, t.count])
+    );
+
+    const timeline = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(sevenDaysAgo);
+      day.setUTCDate(day.getUTCDate() + i);
+      const key = day.toISOString().slice(0, 10);
+      timeline.push({ date: key, count: countsByDate[key] || 0 });
+    }
 
     res.json({
       stats: { total, resolved, pending, escalated },
@@ -85,6 +110,12 @@ export const getDashboard = async (req, res) => {
 
 // 📋 All complaints
 export const getComplaints = async (req, res) => {
+  const candidates = await Complaint.find({
+    escalated: false,
+    status: { $in: ["pending", "assigned", "in-progress"] },
+  });
+  await applyEscalation(candidates);
+
   const complaints = await Complaint.find().populate("assignedTo");
   res.json(complaints);
 };
@@ -175,8 +206,11 @@ export const clearNotifications = async (req, res) => {
 export const markNotificationRead = async (req, res) => {
   try {
     const notification =
-      await Notification.findByIdAndUpdate(
-        req.params.id,
+      await Notification.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          user: req.user._id,
+        },
         {
           read: true,
         },
@@ -336,6 +370,45 @@ export const deleteUser = async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+export const toggleUserBlock = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isBlocked = !user.isBlocked;
+    await user.save();
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+export const deleteComplaint = async (req, res) => {
+  try {
+    await Complaint.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Complaint deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+export const exportComplaintsCSV = async (req, res) => {
+  try {
+    const { Parser } = await import("json2csv");
+    const complaints = await Complaint.find().lean();
+
+    const parser = new Parser();
+    const csv = parser.parse(complaints);
+
+    res.header("Content-Type", "text/csv");
+    res.attachment("complaints.csv");
+    res.send(csv);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

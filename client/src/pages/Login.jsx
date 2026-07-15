@@ -21,16 +21,13 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import "./AuthPremium.css";
+import { motion } from "framer-motion";
 
-import socket from "../socket.js";
-
-// ✅ ROLE → DASHBOARD
-const DASH = {
-  admin: "/admin",
-  staff: "/staff",
-  citizen: "/citizen",
-};
+import { LANDING_PATH } from "../constants/roles";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import GradientMesh from "../components/ui/GradientMesh";
 
 export default function Login() {
 
@@ -72,8 +69,7 @@ export default function Login() {
     ) {
 
       navigate(
-        DASH[user.role] ||
-          "/citizen",
+        LANDING_PATH,
 
         { replace: true }
       );
@@ -104,19 +100,8 @@ export default function Login() {
           "fulfilled"
         ) {
 
-          const {
-            role,
-            id,
-          } = res.payload.user;
-
-          socket.emit(
-            "join",
-            id
-          );
-
           navigate(
-            DASH[role] ||
-              "/citizen",
+            LANDING_PATH,
 
             {
               replace: true,
@@ -182,19 +167,8 @@ export default function Login() {
         "fulfilled"
       ) {
 
-        const {
-          role,
-          id,
-        } = res.payload.user;
-
-        socket.emit(
-          "join",
-          id
-        );
-
         navigate(
-          DASH[role] ||
-            "/citizen",
+          LANDING_PATH,
 
           { replace: true }
         );
@@ -203,124 +177,73 @@ export default function Login() {
 
   return (
 
-    <div className="premium-container">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+      <GradientMesh />
 
-      <form
-        className="premium-card"
-        onSubmit={handleSubmit}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="relative w-full max-w-sm"
       >
+        <Card variant="glass" padding="lg">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-        <h2>
-          CiviTrack
-        </h2>
+            <div className="mb-2 text-center">
+              <h2 className="text-xl font-bold text-foreground">CiviTrack</h2>
+              <p className="mt-1 text-sm text-muted">Welcome back</p>
+            </div>
 
-        <p className="subtitle">
-          Welcome back
-        </p>
+            {error && (
+              <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+                {error}
+              </p>
+            )}
 
-        {error && (
+            <Input
+              label="Email"
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) => {
+                dispatch(clearError());
+                setForm({ ...form, email: e.target.value });
+              }}
+            />
 
-          <p className="auth-error">
-            {error}
-          </p>
+            <Input
+              label="Password"
+              type="password"
+              required
+              value={form.password}
+              onChange={(e) => {
+                dispatch(clearError());
+                setForm({ ...form, password: e.target.value });
+              }}
+            />
 
-        )}
+            <Button type="submit" loading={loading} size="lg" className="mt-2 w-full">
+              {loading ? "Logging in..." : "Login"}
+            </Button>
 
-        {/* EMAIL */}
-        <div className="input-group">
+            <div className="my-1 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted">or</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
 
-          <input
-            type="email"
-            required
-            value={form.email}
-            onChange={(e) => {
+            <div id="google-btn" className="flex justify-center" />
 
-              dispatch(
-                clearError()
-              );
+            <p className="text-center text-sm text-muted">
+              Don't have an account?{" "}
+              <Link to="/signup" className="font-medium text-primary hover:text-primary-hover">
+                Signup
+              </Link>
+            </p>
 
-              setForm({
-                ...form,
-                email:
-                  e.target.value,
-              });
-            }}
-          />
-
-          <label>
-            Email
-          </label>
-
-        </div>
-
-        {/* PASSWORD */}
-        <div className="input-group">
-
-          <input
-            type="password"
-            required
-            value={form.password}
-            onChange={(e) => {
-
-              dispatch(
-                clearError()
-              );
-
-              setForm({
-                ...form,
-                password:
-                  e.target.value,
-              });
-            }}
-          />
-
-          <label>
-            Password
-          </label>
-
-        </div>
-
-        {/* LOGIN BUTTON */}
-        <button
-          type="submit"
-          disabled={loading}
-        >
-
-          {loading
-            ? "Logging in..."
-            : "Login"}
-
-        </button>
-
-        {/* GOOGLE */}
-        <div className="divider">
-
-          <span>
-            or
-          </span>
-
-        </div>
-
-        <div
-          id="google-btn"
-          className="google-btn-wrapper"
-        />
-
-        {/* SIGNUP */}
-        <p className="switch">
-
-          Don't have an account?
-
-          {" "}
-
-          <Link to="/signup">
-            Signup
-          </Link>
-
-        </p>
-
-      </form>
-
+          </form>
+        </Card>
+      </motion.div>
     </div>
   );
 }

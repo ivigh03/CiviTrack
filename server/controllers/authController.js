@@ -82,6 +82,12 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid credentials" });
     }
 
+    if (user.isBlocked) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Account is blocked" });
+    }
+
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -131,6 +137,12 @@ export const googleAuth = async (req, res) => {
         avatar: picture,
         role: "citizen", // default role for Google signups
       });
+    }
+
+    if (user.isBlocked) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Account is blocked" });
     }
 
     res.status(200).json({

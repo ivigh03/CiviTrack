@@ -1,11 +1,17 @@
 import Timeline from "./Timeline";
+import { motion } from "framer-motion";
+import { UPLOADS_BASE_URL } from "../../api/axios";
 
 export default function ComplaintCard({ complaint, handleAction }) {
   // 🔥 SAFETY (prevents crash)
   if (!complaint) return null;
 
   return (
-    <div className="staff-card">
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="staff-card"
+    >
 
       {/* 🔝 TOP */}
       <div className="card-top">
@@ -28,7 +34,7 @@ export default function ComplaintCard({ complaint, handleAction }) {
       {/* 🔥 IMAGE */}
       {complaint.image && (
         <img
-          src={`http://localhost:5000${complaint.image}`}
+          src={`${UPLOADS_BASE_URL}${complaint.image}`}
           alt="complaint"
           className="complaint-img"
         />
@@ -61,6 +67,6 @@ export default function ComplaintCard({ complaint, handleAction }) {
           ✔ Completed
         </p>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function ProofUploadModal({ complaint, onClose, onSubmit }) {
   const [note, setNote] = useState("");
@@ -10,8 +11,19 @@ export default function ProofUploadModal({ complaint, onClose, onSubmit }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="modal-overlay"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+        transition={{ duration: 0.2 }}
+        className="modal"
+      >
         <h2>Upload Proof</h2>
 
         <input
@@ -29,7 +41,7 @@ export default function ProofUploadModal({ complaint, onClose, onSubmit }) {
           <button onClick={handleSubmit}>Submit</button>
           <button onClick={onClose}>Cancel</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

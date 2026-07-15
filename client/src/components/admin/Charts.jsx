@@ -35,35 +35,43 @@ const lineData = data.timeline || [];
       <div className="bg-white p-6 rounded-xl shadow">
         <h2 className="text-lg font-semibold mb-4">Complaint Status</h2>
 
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={90}
-            >
-              {pieData.map((entry, index) => (
-                <Cell key={index} fill={COLORS[index]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+        {pieData.every((d) => d.value === 0) ? (
+          <p className="text-gray-400 text-center py-10">No complaints yet</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={90}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={index} fill={COLORS[index]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* 📊 BAR CHART */}
       <div className="bg-white p-6 rounded-xl shadow">
         <h2 className="text-lg font-semibold mb-4">Category Distribution</h2>
 
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={barData}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="count" fill="#6366f1" />
-          </BarChart>
-        </ResponsiveContainer>
+        {barData.length === 0 ? (
+          <p className="text-gray-400 text-center py-10">No category data yet</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={barData}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="#6366f1" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* 📊 LINE CHART */}
