@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bell, BellOff } from "lucide-react";
 import { useNotifications } from "../../context/NotificationContext";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import EmptyState from "../ui/EmptyState";
 
 export default function Notifications() {
   const { notifications, markAsRead, markAllRead, clearAll } = useNotifications();
@@ -17,42 +21,52 @@ export default function Notifications() {
   };
 
   return (
-    <div className="notifications">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h3>🔔 Notifications</h3>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button onClick={markAllRead} disabled={notifications.length === 0}>
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <Bell className="h-4 w-4 text-primary" />
+          Notifications
+        </h3>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={markAllRead} disabled={notifications.length === 0}>
             Mark all read
-          </button>
-          <button onClick={clearAll} disabled={notifications.length === 0}>
+          </Button>
+          <Button variant="outline" size="sm" onClick={clearAll} disabled={notifications.length === 0}>
             Clear all
-          </button>
+          </Button>
         </div>
       </div>
 
       {notifications.length === 0 ? (
-        <p>No new notifications</p>
+        <EmptyState icon={BellOff} title="No new notifications" description="You're all caught up." />
       ) : (
-        <AnimatePresence initial={false}>
-          {notifications.map((n, i) => (
-            <motion.div
-              key={n._id}
-              layout
-              className="notification"
-              initial={{ opacity: 0, x: -20, backgroundColor: "rgba(99,102,241,0.25)" }}
-              animate={{ opacity: 1, x: 0, backgroundColor: "rgba(99,102,241,0)" }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.35, delay: i * 0.03 }}
-              onClick={() => handleClick(n)}
-              style={{
-                cursor: "pointer",
-                fontWeight: n.read ? "normal" : "bold",
-              }}
-            >
-              {n.message}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <div className="space-y-2">
+          <AnimatePresence initial={false}>
+            {notifications.map((n, i) => (
+              <motion.div
+                key={n._id}
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3, delay: i * 0.03 }}
+                onClick={() => handleClick(n)}
+              >
+                <Card
+                  padding="sm"
+                  className={`flex cursor-pointer items-center gap-3 transition-colors hover:border-primary/40 ${
+                    !n.read ? "border-l-4 border-l-primary" : ""
+                  }`}
+                >
+                  <Bell className={`h-4 w-4 shrink-0 ${n.read ? "text-muted" : "text-primary"}`} />
+                  <p className={`text-sm ${n.read ? "text-muted" : "font-medium text-foreground"}`}>
+                    {n.message}
+                  </p>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );
