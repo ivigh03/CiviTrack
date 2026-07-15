@@ -1,6 +1,21 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { UserCog, Trash2, CheckCircle2, History, MapPin, ImageOff } from "lucide-react";
 import axios, { UPLOADS_BASE_URL } from "../../api/axios";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import Drawer from "../../components/ui/Drawer";
+import EmptyState from "../../components/ui/EmptyState";
+import { SkeletonCard } from "../../components/ui/Skeleton";
+import { cn } from "../../lib/cn";
+
+const STEPS = [
+  { key: "pending", label: "Pending" },
+  { key: "in-progress", label: "Assigned" },
+  { key: "resolved", label: "Resolved" },
+];
 
 const ComplaintDetail = () => {
   const { id } = useParams();
@@ -49,7 +64,13 @@ const ComplaintDetail = () => {
 
   // ✅ Prevent crash
   if (!complaint) {
-    return <p className="text-white">Loading...</p>;
+    return (
+      <div className="grid gap-6 md:grid-cols-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
   }
   const getSLATimeLeft = () => {
   if (!complaint.slaDeadline) return null;
@@ -103,202 +124,171 @@ const ComplaintDetail = () => {
   return "bg-green-500";
 };
 
+  const activeStep = STEPS.findIndex((s) => s.key === complaint.status);
+
   return (
-    <div className="text-white grid md:grid-cols-3 gap-6">
-
+    <div className="grid gap-6 md:grid-cols-3">
       {/* LEFT */}
-      <div className="md:col-span-2 bg-[#1e293b] p-6 rounded-xl">
-        <h2 className="text-xl font-bold mb-3">
-          {complaint.title}
-        </h2>
-        {complaint.slaDeadline && (
-  <span
-  className={`text-white text-xs px-3 py-1 rounded-full ${
-    timeLeft === "Expired" ? "bg-red-500" : "bg-green-500"
-  }`}
->
-  SLA: {timeLeft}
-</span>
-  
-)}
-<span
-  className={`text-white text-xs px-3 py-1 rounded-full ml-2 ${getPriorityColor()}`}
->
-  {complaint.priority?.toUpperCase()}
-</span>
+      <Card className="md:col-span-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h2 className="text-xl font-bold text-foreground">{complaint.title}</h2>
+          {complaint.slaDeadline && (
+            <Badge variant={timeLeft === "Expired" ? "danger" : "success"}>SLA: {timeLeft}</Badge>
+          )}
+          {complaint.priority && (
+            <span
+              className={cn("rounded-full px-3 py-1 text-xs font-semibold text-white", getPriorityColor())}
+            >
+              {complaint.priority.toUpperCase()}
+            </span>
+          )}
+        </div>
 
-        {complaint.image && (
+        {complaint.image ? (
           <img
             src={`${UPLOADS_BASE_URL}${complaint.image}`}
             alt=""
-            className="rounded-lg mb-4 w-full h-[300px] object-cover"
+            className="mb-4 h-[300px] w-full rounded-xl object-cover"
           />
+        ) : (
+          <div className="mb-4 flex h-[300px] w-full items-center justify-center rounded-xl bg-elevated text-muted">
+            <ImageOff className="h-8 w-8" />
+          </div>
         )}
 
-        <p>{complaint.userDescription}</p>
+        <p className="text-foreground">{complaint.userDescription}</p>
+
+        {complaint.address && (
+          <p className="mt-3 flex items-center gap-1.5 text-sm text-muted">
+            <MapPin className="h-3.5 w-3.5" />
+            {complaint.address}
+          </p>
+        )}
 
         {(complaint.proofImage || complaint.staffRemark) && (
-          <div className="mt-4">
-            <p className="font-semibold mb-2">Resolution Proof:</p>
+          <div className="mt-5 border-t border-border pt-4">
+            <p className="mb-2 flex items-center gap-1.5 font-semibold text-foreground">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              Resolution Proof
+            </p>
             {complaint.proofImage && (
               <img
                 src={`${UPLOADS_BASE_URL}${complaint.proofImage}`}
                 alt="Resolution proof"
-                className="rounded-lg w-full h-[300px] object-cover"
+                className="h-[300px] w-full rounded-xl object-cover"
               />
             )}
             {complaint.staffRemark && (
-              <p className="mt-2 text-gray-300">Staff remark: {complaint.staffRemark}</p>
+              <p className="mt-2 text-muted">Staff remark: {complaint.staffRemark}</p>
             )}
           </div>
         )}
-      </div>
-      <div className="mt-6">
-  <h3 className="font-semibold mb-3">Progress Timeline</h3>
 
-  <div className="flex items-center justify-between text-sm">
+        {/* PROGRESS TIMELINE */}
+        <div className="mt-6">
+          <h3 className="mb-4 font-semibold text-foreground">Progress Timeline</h3>
 
-    {/* PENDING */}
-    <div className="flex flex-col items-center">
-      <div className={`w-4 h-4 rounded-full ${
-        complaint.status === "pending" ? "bg-yellow-400" : "bg-gray-400"
-      }`} />
-      <p className="mt-1">Pending</p>
-    </div>
-
-    <div className="flex-1 h-1 bg-gray-600 mx-2"></div>
-
-    {/* IN PROGRESS */}
-    <div className="flex flex-col items-center">
-      <div className={`w-4 h-4 rounded-full ${
-        complaint.status === "in-progress" ? "bg-blue-400" : "bg-gray-400"
-      }`} />
-      <p className="mt-1">Assigned</p>
-    </div>
-
-    <div className="flex-1 h-1 bg-gray-600 mx-2"></div>
-
-    {/* RESOLVED */}
-    <div className="flex flex-col items-center">
-      <div className={`w-4 h-4 rounded-full ${
-        complaint.status === "resolved" ? "bg-green-400" : "bg-gray-400"
-      }`} />
-      <p className="mt-1">Resolved</p>
-    </div>
-
-  </div>
-</div>
-
-      {/* RIGHT PANEL */}
-      <div className="bg-[#1e293b] p-6 rounded-xl">
-
-        <button
-          onClick={markResolved}
-          className="bg-red-500 w-full py-2 rounded mb-4"
-        >
-          Mark as Resolved
-        </button>
-
-        <p className="mb-2 font-semibold">Assigned Staff:</p>
-
-        {complaint.assignedTo ? (
-          <p>{complaint.assignedTo.name}</p>
-        ) : (
-          <p className="text-gray-400">Not assigned</p>
-        )}
-
-        <button
-          onClick={() => setShowAssign(true)}
-          className="bg-blue-500 w-full py-2 rounded mt-4"
-        >
-          Assign / Reassign Staff
-        </button>
-
-        <button
-          onClick={deleteComplaint}
-          className="bg-red-700 w-full py-2 rounded mt-4"
-        >
-          Delete Complaint
-        </button>
-      </div>
-      {/* ASSIGNMENT HISTORY */}
-<div className="bg-[#1e293b] p-6 rounded-xl mt-6">
-  <h3 className="font-bold text-lg mb-4">
-    Assignment History
-  </h3>
-
-  {!complaint.assignmentHistory ||
-  complaint.assignmentHistory.length === 0 ? (
-    <p className="text-gray-400">
-      No assignment history
-    </p>
-  ) : (
-    <div className="space-y-4">
-      {complaint.assignmentHistory.map(
-        (item, index) => (
-          <div
-            key={index}
-            className="border-l-4 border-blue-500 pl-4"
-          >
-            <p className="font-semibold">
-              {item.action === "assigned"
-                ? "📌 Assigned"
-                : "🔄 Reassigned"}
-            </p>
-
-            <p>
-              Staff:
-              {" "}
-              {item.assignedTo?.name ||
-                "Unknown"}
-            </p>
-
-            <p className="text-sm text-gray-400">
-              {new Date(
-                item.assignedAt
-              ).toLocaleString()}
-            </p>
-          </div>
-        )
-      )}
-    </div>
-  )}
-</div>
-
-      {/* ASSIGN PANEL */}
-      {showAssign && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-end">
-
-          <div className="bg-white w-[350px] h-full p-4 overflow-y-auto">
-            <h2 className="text-black font-bold mb-4">
-              Assign Staff
-            </h2>
-
-            {staffList.map((s) => (
-              <div
-                key={s._id}
-                className="flex justify-between border-b py-2"
-              >
-                <span className="text-black">{s.name}</span>
-
-                <button
-                  onClick={() => assignStaff(s._id)}
-                  className="bg-green-500 text-white px-3 py-1 rounded"
-                >
-                  Select
-                </button>
-              </div>
+          <div className="flex items-center justify-between text-sm">
+            {STEPS.map((step, i) => (
+              <Fragment key={step.key}>
+                <div className="flex flex-col items-center gap-1.5">
+                  <motion.div
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                    className={cn(
+                      "h-4 w-4 rounded-full",
+                      activeStep >= i ? "bg-primary" : "bg-elevated"
+                    )}
+                  />
+                  <p className="text-muted">{step.label}</p>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div
+                    className={cn(
+                      "mx-2 h-1 flex-1 rounded-full transition-colors",
+                      activeStep > i ? "bg-primary" : "bg-elevated"
+                    )}
+                  />
+                )}
+              </Fragment>
             ))}
-
-            <button
-              onClick={() => setShowAssign(false)}
-              className="mt-4 bg-gray-400 w-full py-2 rounded"
-            >
-              Close
-            </button>
           </div>
         </div>
-      )}
+      </Card>
+
+      {/* RIGHT PANEL */}
+      <div className="flex flex-col gap-6">
+        <Card>
+          <Button variant="danger" className="w-full" onClick={markResolved}>
+            <CheckCircle2 className="h-4 w-4" />
+            Mark as Resolved
+          </Button>
+
+          <p className="mb-2 mt-5 font-semibold text-foreground">Assigned Staff</p>
+          {complaint.assignedTo ? (
+            <p className="text-foreground">{complaint.assignedTo.name}</p>
+          ) : (
+            <p className="text-muted">Not assigned</p>
+          )}
+
+          <Button className="mt-4 w-full" onClick={() => setShowAssign(true)}>
+            <UserCog className="h-4 w-4" />
+            Assign / Reassign Staff
+          </Button>
+
+          <Button variant="outline" className="mt-3 w-full border-danger/40 text-danger hover:bg-danger hover:text-white" onClick={deleteComplaint}>
+            <Trash2 className="h-4 w-4" />
+            Delete Complaint
+          </Button>
+        </Card>
+
+        {/* ASSIGNMENT HISTORY */}
+        <Card>
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
+            <History className="h-4 w-4 text-primary" />
+            Assignment History
+          </h3>
+
+          {!complaint.assignmentHistory || complaint.assignmentHistory.length === 0 ? (
+            <p className="text-muted">No assignment history</p>
+          ) : (
+            <div className="space-y-4">
+              {complaint.assignmentHistory.map((item, index) => (
+                <div key={index} className="border-l-2 border-primary pl-4">
+                  <p className="font-semibold text-foreground">
+                    {item.action === "assigned" ? "📌 Assigned" : "🔄 Reassigned"}
+                  </p>
+                  <p className="text-foreground">Staff: {item.assignedTo?.name || "Unknown"}</p>
+                  <p className="text-sm text-muted">
+                    {new Date(item.assignedAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* ASSIGN PANEL */}
+      <Drawer open={showAssign} onOpenChange={setShowAssign} side="right" title="Assign Staff" widthClassName="w-[350px]">
+        <div className="p-4">
+          {staffList.length === 0 ? (
+            <EmptyState title="No staff available" className="border-none bg-transparent" />
+          ) : (
+            <div className="space-y-1">
+              {staffList.map((s) => (
+                <div key={s._id} className="flex items-center justify-between border-b border-border py-3">
+                  <span className="text-foreground">{s.name}</span>
+                  <Button size="sm" variant="secondary" onClick={() => assignStaff(s._id)}>
+                    Select
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Drawer>
     </div>
   );
 };

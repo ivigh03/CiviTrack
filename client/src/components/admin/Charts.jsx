@@ -12,11 +12,23 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import Card from "../ui/Card";
+import EmptyState from "../ui/EmptyState";
+import { PieChart as PieIcon, BarChart3, LineChart as LineIcon } from "lucide-react";
 
-const COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444"];
+const COLORS = ["#8176FF", "#34D399", "#FBBF24", "#F87171"];
+const AXIS_COLOR = "#94a3b8";
+
+const tooltipStyle = {
+  background: "rgb(var(--color-surface))",
+  border: "1px solid rgb(var(--color-border) / var(--border-opacity))",
+  borderRadius: 12,
+  color: "rgb(var(--color-foreground))",
+  fontSize: 13,
+};
 
 const Charts = ({ data }) => {
-  if (!data) return <p className="text-white">No chart data</p>;
+  if (!data) return <p className="text-muted">No chart data</p>;
 
   // ✅ FIX: Use stats directly
   const pieData = [
@@ -27,68 +39,71 @@ const Charts = ({ data }) => {
 
   // Dummy fallback data (until backend ready)
   const barData = data.category || [];
-const lineData = data.timeline || [];
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+  const lineData = data.timeline || [];
 
-      {/* 📊 PIE CHART */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Complaint Status</h2>
+  return (
+    <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* PIE CHART */}
+      <Card>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+          <PieIcon className="h-4 w-4 text-primary" />
+          Complaint Status
+        </h2>
 
         {pieData.every((d) => d.value === 0) ? (
-          <p className="text-gray-400 text-center py-10">No complaints yet</p>
+          <EmptyState icon={PieIcon} title="No complaints yet" className="border-none bg-transparent py-8" />
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={90}
-              >
+              <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={90}>
                 {pieData.map((entry, index) => (
                   <Cell key={index} fill={COLORS[index]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={tooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
         )}
-      </div>
+      </Card>
 
-      {/* 📊 BAR CHART */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Category Distribution</h2>
+      {/* BAR CHART */}
+      <Card>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          Category Distribution
+        </h2>
 
         {barData.length === 0 ? (
-          <p className="text-gray-400 text-center py-10">No category data yet</p>
+          <EmptyState icon={BarChart3} title="No category data yet" className="border-none bg-transparent py-8" />
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={barData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#6366f1" />
+              <XAxis dataKey="name" stroke={AXIS_COLOR} fontSize={12} />
+              <YAxis stroke={AXIS_COLOR} fontSize={12} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgb(var(--color-elevated))" }} />
+              <Bar dataKey="count" fill="#8176FF" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+      </Card>
 
-      {/* 📊 LINE CHART */}
-      <div className="bg-white p-6 rounded-xl shadow col-span-1 lg:col-span-2">
-        <h2 className="text-lg font-semibold mb-4">Complaints Over Time</h2>
+      {/* LINE CHART */}
+      <Card className="lg:col-span-2">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+          <LineIcon className="h-4 w-4 text-primary" />
+          Complaints Over Time
+        </h2>
 
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={lineData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#3b82f6" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-border) / 0.15)" />
+            <XAxis dataKey="date" stroke={AXIS_COLOR} fontSize={12} />
+            <YAxis stroke={AXIS_COLOR} fontSize={12} />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Line type="monotone" dataKey="count" stroke="#8176FF" strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
-
+      </Card>
     </div>
   );
 };
