@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
-import axios from "../../api/axios";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchDashboard } from "../../features/dashboard/dashboardSlice";
 import StatsCards from "../../components/admin/StatsCards";
 import Charts from "../../components/admin/Charts";
 import { SkeletonCard } from "../../components/ui/Skeleton";
 import PageTransition from "../../components/ui/PageTransition";
 
 const AdminDashboard = () => {
-  const [data, setData] = useState(null);
+  const dispatch = useDispatch();
+  const { stats, charts } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
-    axios.get("/admin/dashboard").then((res) => {
-      setData(res.data);
-    });
-  }, []);
+    dispatch(fetchDashboard());
+  }, [dispatch]);
 
-  if (!data) {
+  if (!stats || !charts) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -27,8 +27,8 @@ const AdminDashboard = () => {
   return (
     <PageTransition>
       <h1 className="mb-6 text-xl font-semibold text-foreground">Overview</h1>
-      <StatsCards stats={data.stats} />
-      <Charts data={{ ...data.stats, ...data.charts }} />
+      <StatsCards stats={stats} />
+      <Charts data={{ ...stats, ...charts }} />
     </PageTransition>
   );
 };

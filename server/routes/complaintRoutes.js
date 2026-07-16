@@ -9,6 +9,7 @@ import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import { createNotification } from "../utils/createNotification.js";
 import { getIO } from "../socket.js";
 import { applyEscalation } from "../utils/checkEscalation.js";
+import { broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
 
 const router = express.Router();
 
@@ -141,6 +142,9 @@ router.post(
           .to(admin._id.toString())
           .emit("newNotification", notification);
       }
+
+      getIO().to("admins").emit("complaint:new", complaint);
+      await broadcastDashboardUpdate();
 
       res.status(201).json({
         success: true,
@@ -276,6 +280,8 @@ router.put(
 
       await complaint.save();
 
+      getIO().to("admins").emit("complaint:updated", complaint);
+
       res.json({
         success: true,
         data: complaint,
@@ -357,6 +363,9 @@ router.put(
           .to(admin._id.toString())
           .emit("newNotification", notification);
       }
+
+      getIO().to("admins").emit("complaint:updated", complaint);
+      await broadcastDashboardUpdate();
 
       res.json({
         success: true,

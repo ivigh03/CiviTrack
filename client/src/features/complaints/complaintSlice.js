@@ -52,7 +52,41 @@ const complaintSlice =
       error: null,
     },
 
-    reducers: {},
+    reducers: {
+      // 🔴 Pushed live over Socket.io (or optimistically, before the server
+      // confirms) — unshift only if this complaint isn't already in the list.
+      complaintAdded: (state, action) => {
+        const exists = state.complaints.some(
+          (c) => c._id === action.payload._id
+        );
+
+        if (!exists) {
+          state.complaints.unshift(action.payload);
+        }
+      },
+
+      // 🔴 Merge an updated complaint in place by _id (vote/assign/status/
+      // escalation). Defensively pushes it if it wasn't in the list yet.
+      complaintUpdated: (state, action) => {
+        const index = state.complaints.findIndex(
+          (c) => c._id === action.payload._id
+        );
+
+        if (index !== -1) {
+          state.complaints[index] = action.payload;
+        } else {
+          state.complaints.unshift(action.payload);
+        }
+      },
+
+      // 🔴 Roll back an optimistic add (e.g. a failed submit, or swapping a
+      // temp complaint for the real one once the server responds).
+      complaintRemoved: (state, action) => {
+        state.complaints = state.complaints.filter(
+          (c) => c._id !== action.payload
+        );
+      },
+    },
 
     extraReducers: (builder) => {
 
@@ -103,6 +137,12 @@ const complaintSlice =
         );
     },
   });
+
+export const {
+  complaintAdded,
+  complaintUpdated,
+  complaintRemoved,
+} = complaintSlice.actions;
 
 export default
 complaintSlice.reducer;

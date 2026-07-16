@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import { createNotification } from "./createNotification.js";
 import { getIO } from "../socket.js";
+import { broadcastDashboardUpdate } from "./dashboardSnapshot.js";
 
 const ACTIVE_STATUSES = ["pending", "assigned", "in-progress"];
 
@@ -37,5 +38,9 @@ export const applyEscalation = async (complaints) => {
         .to(admin._id.toString())
         .emit("newNotification", notification);
     }
+
+    getIO().to("admins").emit("complaint:updated", complaint);
   }
+
+  await broadcastDashboardUpdate();
 };
