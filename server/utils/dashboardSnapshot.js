@@ -1,4 +1,5 @@
 import Complaint from "../models/Complaint.js";
+import User from "../models/User.js";
 import { getIO } from "../socket.js";
 
 // ✅ Stats + chart aggregation, shared by the REST endpoint and every
@@ -63,9 +64,54 @@ export const getDashboardSnapshot = async () => {
     timeline.push({ date: key, count: countsByDate[key] || 0 });
   }
 
+  const ratingAgg = await Complaint.aggregate([
+    { $match: { "citizenRating.stars": { $exists: true } } },
+    { $group: { _id: null, avgRating: { $avg: "$citizenRating.stars" }, count: { $sum: 1 } } },
+  ]);
+
+  const avgRating = ratingAgg[0] ? Math.round(ratingAgg[0].avgRating * 10) / 10 : null;
+  const ratedCount = ratingAgg[0]?.count ?? 0;
+
+  const staffRatingAgg = await Complaint.aggregate([
+    { $match: { "citizenRating.stars": { $exists: true }, assignedTo: { $ne: null } } },
+    { $group: { _id: "$assignedTo", avgStars: { $avg: "$citizenRating.stars" }, count: { $sum: 1 } } },
+    { $sort: { avgStars: -1 } },
+  ]);
+
+  let topRatedStaff = null;
+  let worstRatedStaff = null;
+
+  if (staffRatingAgg.length > 0) {
+    const top = staffRatingAgg[0];
+    const worst = staffRatingAgg[staffRatingAgg.length - 1];
+
+    const [topUser, worstUser] = await Promise.all([
+      User.findById(top._id).select("name"),
+      User.findById(worst._id).select("name"),
+    ]);
+
+    topRatedStaff = {
+      staffId: top._id,
+      name: topUser?.name || "Unknown",
+      avgRating: Math.round(top.avgStars * 10) / 10,
+      ratingCount: top.count,
+    };
+
+    worstRatedStaff = staffRatingAgg.length > 1
+      ? {
+          staffId: worst._id,
+          name: worstUser?.name || "Unknown",
+          avgRating: Math.round(worst.avgStars * 10) / 10,
+          ratingCount: worst.count,
+        }
+      : null;
+  }
+
   return {
-    stats: { total, resolved, pending, escalated },
+    stats: { total, resolved, pending, escalated, avgRating, avgResolutionQuality: avgRating, ratedCount },
     charts: { category, timeline },
+    topRatedStaff,
+    worstRatedStaff,
   };
 };
 

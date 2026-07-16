@@ -3,12 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchDashboard } from "../../features/dashboard/dashboardSlice";
 import StatsCards from "../../components/admin/StatsCards";
 import Charts from "../../components/admin/Charts";
+import SatisfactionStats from "../../components/admin/SatisfactionStats";
 import { SkeletonCard } from "../../components/ui/Skeleton";
 import PageTransition from "../../components/ui/PageTransition";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const { stats, charts } = useSelector((state) => state.dashboard);
+  const { stats, charts, topRatedStaff, worstRatedStaff } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
     dispatch(fetchDashboard());
@@ -29,6 +30,7 @@ const AdminDashboard = () => {
       <h1 className="mb-6 text-xl font-semibold text-foreground">Overview</h1>
       <StatsCards stats={stats} />
       <Charts data={{ ...stats, ...charts }} />
+      <SatisfactionStats stats={stats} topRatedStaff={topRatedStaff} worstRatedStaff={worstRatedStaff} />
     </PageTransition>
   );
 };

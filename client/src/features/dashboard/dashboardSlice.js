@@ -20,6 +20,8 @@ const dashboardSlice = createSlice({
   initialState: {
     stats: null,
     charts: null,
+    topRatedStaff: null,
+    worstRatedStaff: null,
     loading: false,
     error: null,
   },
@@ -30,6 +32,8 @@ const dashboardSlice = createSlice({
     dashboardUpdated: (state, action) => {
       state.stats = action.payload.stats;
       state.charts = action.payload.charts;
+      state.topRatedStaff = action.payload.topRatedStaff;
+      state.worstRatedStaff = action.payload.worstRatedStaff;
     },
   },
 
@@ -42,6 +46,8 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.stats = action.payload.stats;
         state.charts = action.payload.charts;
+        state.topRatedStaff = action.payload.topRatedStaff;
+        state.worstRatedStaff = action.payload.worstRatedStaff;
       })
       .addCase(fetchDashboard.rejected, (state, action) => {
         state.loading = false;

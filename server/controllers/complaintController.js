@@ -2,6 +2,7 @@ import { analyzeImage } from "../services/geminiService.js";
 import fs from "fs";
 import Complaint from "../models/Complaint.js";
 import { logActivity } from "../utils/logActivity.js";
+import { broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
 
 export const analyzeComplaintImage = async (req, res) => {
 
@@ -157,6 +158,7 @@ export const rateComplaint = async (req, res) => {
     });
 
     await complaint.save();
+    await broadcastDashboardUpdate();
 
     const updated = await Complaint.findById(complaint._id)
       .populate("user")
