@@ -6,6 +6,7 @@ import {
   Users,
   ClipboardList,
   Flame,
+  TrendingUp,
   Bell,
   LogOut,
   Sun,
@@ -23,6 +24,7 @@ const LINKS = [
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/complaints", label: "Complaints", icon: ClipboardList },
   { to: "/admin/heatmap", label: "Heatmap", icon: Flame },
+  { to: "/admin/staff-performance", label: "Staff Performance", icon: TrendingUp },
 ];
 
 const Navbar = () => {
