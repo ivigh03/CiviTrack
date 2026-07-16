@@ -21,6 +21,7 @@ import Heatmap from "./components/admin/Heatmap";
 import ComplaintDetails from "./pages/admin/ComplaintDetail";
 import Notifications from "./pages/admin/Notifcations";
 import socket from "./socket";
+import useRealtimeAdmin from "./hooks/useRealtimeAdmin";
 // ✅ NAVBAR
 import Navbar from "./components/admin/Navbar";
 
@@ -31,6 +32,8 @@ import { TooltipProvider } from "./components/ui/Tooltip";
 
 // ✅ Wrapper
 const AdminWrapper = ({ children }) => {
+  useRealtimeAdmin();
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
