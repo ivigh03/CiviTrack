@@ -1,7 +1,12 @@
 import express from "express";
 import multer from "multer";
 
-import { analyzeComplaintImage, getComplaintLocations } from "../controllers/complaintController.js";
+import {
+  analyzeComplaintImage,
+  getComplaintLocations,
+  rateComplaint,
+  getComplaintDetail,
+} from "../controllers/complaintController.js";
 
 import Complaint from "../models/Complaint.js";
 import User from "../models/User.js";
@@ -10,6 +15,7 @@ import { createNotification } from "../utils/createNotification.js";
 import { getIO } from "../socket.js";
 import { applyEscalation } from "../utils/checkEscalation.js";
 import { broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
+import { logActivity } from "../utils/logActivity.js";
 
 const router = express.Router();
 
@@ -123,6 +129,18 @@ router.post(
           slaDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000),
         });
 
+      logActivity(complaint, {
+        action: "Complaint Created",
+        performedBy: req.user._id,
+      });
+
+      if (req.body.aiSuggested === "true") {
+        logActivity(complaint, {
+          action: "AI Categorized",
+          performedBy: null,
+        });
+      }
+
       await complaint.save();
 
       // ✅ NOTIFY ADMINS
@@ -218,6 +236,9 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
+/* 📄 GET SINGLE COMPLAINT */
+router.get("/:id", protect, getComplaintDetail);
+
 /* 👍👎 VOTE */
 router.put(
   "/:id/vote",
@@ -297,6 +318,9 @@ router.put(
   }
 );
 
+/* ⭐ RATE RESOLUTION */
+router.put("/:id/rate", protect, rateComplaint);
+
 /* ✅ COMPLETE COMPLAINT */
 router.put(
   "/:id/complete",
@@ -343,6 +367,11 @@ router.put(
       // ✅ Resolution timestamp
       complaint.resolvedAt =
         new Date();
+
+      logActivity(complaint, {
+        action: "Resolved",
+        performedBy: req.user._id,
+      });
 
       await complaint.save();
 

@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { UserCog, Trash2, CheckCircle2, History, MapPin, ImageOff } from "lucide-react";
+import { UserCog, Trash2, CheckCircle2, MapPin, ImageOff } from "lucide-react";
 import axios, { UPLOADS_BASE_URL } from "../../api/axios";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -10,6 +10,7 @@ import Drawer from "../../components/ui/Drawer";
 import EmptyState from "../../components/ui/EmptyState";
 import { SkeletonCard } from "../../components/ui/Skeleton";
 import { cn } from "../../lib/cn";
+import ComplaintTimeline from "../../components/shared/ComplaintTimeline";
 
 const STEPS = [
   { key: "pending", label: "Pending" },
@@ -243,30 +244,9 @@ const ComplaintDetail = () => {
           </Button>
         </Card>
 
-        {/* ASSIGNMENT HISTORY */}
+        {/* ACTIVITY TIMELINE */}
         <Card>
-          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
-            <History className="h-4 w-4 text-primary" />
-            Assignment History
-          </h3>
-
-          {!complaint.assignmentHistory || complaint.assignmentHistory.length === 0 ? (
-            <p className="text-muted">No assignment history</p>
-          ) : (
-            <div className="space-y-4">
-              {complaint.assignmentHistory.map((item, index) => (
-                <div key={index} className="border-l-2 border-primary pl-4">
-                  <p className="font-semibold text-foreground">
-                    {item.action === "assigned" ? "📌 Assigned" : "🔄 Reassigned"}
-                  </p>
-                  <p className="text-foreground">Staff: {item.assignedTo?.name || "Unknown"}</p>
-                  <p className="text-sm text-muted">
-                    {new Date(item.assignedAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+          <ComplaintTimeline activityLog={complaint.activityLog || []} />
         </Card>
       </div>
 

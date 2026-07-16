@@ -1,26 +1,35 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { ThumbsUp, ThumbsDown, MapPin, ShieldCheck } from "lucide-react";
 import axios, { UPLOADS_BASE_URL } from "../api/axios";
+import { getComplaintById, rateComplaint } from "../api/complaintApi";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import { SkeletonCard } from "../components/ui/Skeleton";
+import ComplaintTimeline from "../components/shared/ComplaintTimeline";
+import RatingForm from "../components/shared/RatingForm";
 
 export default function ComplaintDetailPublic() {
   const { id } = useParams();
   const [complaint, setComplaint] = useState(null);
+  const { user } = useSelector((state) => state.auth);
+  const currentUserId = user?.id || user?._id;
 
   useEffect(() => {
     const fetchComplaint = async () => {
-      const res = await axios.get("/complaints");
-
-      const found = res.data.data.find((c) => c._id === id);
-      setComplaint(found);
+      const data = await getComplaintById(id);
+      setComplaint(data);
     };
 
     fetchComplaint();
   }, [id]);
+
+  const handleRate = async (stars, comment) => {
+    const updated = await rateComplaint(id, { stars, comment });
+    setComplaint(updated);
+  };
 
   if (!complaint) {
     return (
@@ -87,6 +96,28 @@ export default function ComplaintDetailPublic() {
           </div>
         </div>
       </Card>
+
+      <Card className="mx-auto mt-6 max-w-2xl">
+        <ComplaintTimeline activityLog={complaint.activityLog || []} />
+      </Card>
+
+      {complaint.status === "resolved" && complaint.user?._id === currentUserId && (
+        <Card className="mx-auto mt-6 max-w-2xl">
+          {complaint.citizenRating?.stars ? (
+            <div>
+              <p className="mb-1 text-sm font-medium text-foreground">
+                Your rating: {"★".repeat(complaint.citizenRating.stars)}
+                {"☆".repeat(5 - complaint.citizenRating.stars)}
+              </p>
+              {complaint.citizenRating.comment && (
+                <p className="text-sm text-muted">{complaint.citizenRating.comment}</p>
+              )}
+            </div>
+          ) : (
+            <RatingForm onSubmit={handleRate} />
+          )}
+        </Card>
+      )}
     </div>
   );
 

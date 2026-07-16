@@ -5,6 +5,10 @@ import Notification from "../models/Notification.js";
 import { getIO } from "../socket.js";
 import { applyEscalation } from "../utils/checkEscalation.js";
 import { getDashboardSnapshot, broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
+import { logActivity } from "../utils/logActivity.js";
+
+const formatStatusLabel = (status) =>
+  status.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 export const getNotifications = async (req, res) => {
   try {
     if (!req.user) {
@@ -63,15 +67,23 @@ export const updateStatus = async (req, res) => {
   const { status } = req.body;
 
   try {
-    const updated = await Complaint.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    ).populate("assignedTo");
+    const complaint = await Complaint.findById(req.params.id);
 
-    if (!updated) {
+    if (!complaint) {
       return res.status(404).json({ message: "Complaint not found" });
     }
+
+    complaint.status = status;
+    logActivity(complaint, {
+      action: `Status changed to ${formatStatusLabel(status)}`,
+      performedBy: req.user._id,
+    });
+
+    await complaint.save();
+
+    const updated = await Complaint.findById(complaint._id)
+      .populate("assignedTo")
+      .populate("activityLog.performedBy");
 
     // 🔥 WHEN RESOLVED
     if (status === "resolved") {
@@ -194,6 +206,11 @@ const action = complaint.assignedTo
   ? "reassigned"
   : "assigned";
 
+const previousStatus = complaint.status;
+
+const staffUser = await User.findById(staffId).select("name");
+const staffName = staffUser?.name || "staff";
+
 // Update complaint
 complaint.assignedTo = staffId;
 complaint.status = "in-progress";
@@ -205,6 +222,21 @@ complaint.assignmentHistory.push({
   action,
   assignedAt: new Date(),
 });
+
+logActivity(complaint, {
+  action:
+    action === "assigned"
+      ? `Assigned to ${staffName}`
+      : `Reassigned to ${staffName}`,
+  performedBy: req.user?._id || null,
+});
+
+if (previousStatus !== "in-progress") {
+  logActivity(complaint, {
+    action: "Status changed to In Progress",
+    performedBy: req.user?._id || null,
+  });
+}
 
 await complaint.save();
 
@@ -223,7 +255,8 @@ const populated = await Complaint.findById(
 )
   .populate("assignedTo")
   .populate("assignmentHistory.assignedTo")
-  .populate("assignmentHistory.assignedBy");
+  .populate("assignmentHistory.assignedBy")
+  .populate("activityLog.performedBy");
 
 // Notification
 const notification = {
@@ -361,7 +394,10 @@ export const getComplaintById = async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
       .populate("user")
-      .populate("assignedTo");
+      .populate("assignedTo")
+      .populate("assignmentHistory.assignedTo")
+      .populate("assignmentHistory.assignedBy")
+      .populate("activityLog.performedBy");
 
     res.json(complaint);
   } catch (err) {

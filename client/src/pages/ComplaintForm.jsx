@@ -63,6 +63,15 @@ const currentUserId =
   const [aiResult, setAiResult] =
     useState(null);
 
+  const [category, setCategory] =
+    useState("");
+
+  const [severity, setSeverity] =
+    useState("");
+
+  const [aiSuggested, setAiSuggested] =
+    useState(false);
+
   const [loading, setLoading] =
     useState(false);
 
@@ -193,6 +202,22 @@ const currentUserId =
     formData.append(
       "userDescription",
       description
+    );
+
+    // ✅ CATEGORY / SEVERITY (AI-suggested or defaults)
+    formData.append(
+      "category",
+      category || "general"
+    );
+
+    formData.append(
+      "severity",
+      severity || "medium"
+    );
+
+    formData.append(
+      "aiSuggested",
+      String(aiSuggested)
     );
 
     // ✅ GET USER ID
@@ -328,6 +353,16 @@ const currentUserId =
                     data.category.slice(1)
                   : "General Issue"
               );
+
+              setCategory(
+                data?.category || "general"
+              );
+
+              setSeverity(
+                data?.severity || "medium"
+              );
+
+              setAiSuggested(true);
             }}
 
             onImageSelect={
