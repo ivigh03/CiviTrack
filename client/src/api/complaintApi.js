@@ -37,3 +37,19 @@ export const rateComplaint = async (id, { stars, comment }) => {
   const res = await API.put(`/complaints/${id}/rate`, { stars, comment });
   return res.data.data;
 };
+
+// 🔥 Pre-flight AI duplicate check before creating a complaint
+export const checkDuplicateComplaint = async ({ location, description, category }) => {
+  const res = await API.post("/complaints/check-duplicate", {
+    location,
+    description,
+    category,
+  });
+  return res.data.data;
+};
+
+// 🔥 Vote on a complaint (upvote/downvote)
+export const voteComplaint = async (id, type) => {
+  const res = await API.put(`/complaints/${id}/vote`, { type });
+  return res.data.data;
+};

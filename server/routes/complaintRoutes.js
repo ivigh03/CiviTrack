@@ -16,8 +16,16 @@ import { getIO } from "../socket.js";
 import { applyEscalation } from "../utils/checkEscalation.js";
 import { broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
 import { logActivity } from "../utils/logActivity.js";
+import { embedText, EMBEDDING_MODEL_NAME } from "../services/geminiService.js";
+import { boundingBox, haversineDistanceKm, cosineSimilarity } from "../utils/similarity.js";
 
 const router = express.Router();
+
+/* 🤖 AI DUPLICATE DETECTION CONFIG */
+const DUPLICATE_SEARCH_RADIUS_KM = 0.5;
+const DUPLICATE_SIMILARITY_THRESHOLD = 0.85;
+const DUPLICATE_CANDIDATE_LIMIT = 25;
+const EXCLUDED_STATUSES = ["resolved", "rejected"];
 
 /* 📂 MULTER CONFIG */
 const storage = multer.diskStorage({
@@ -47,6 +55,149 @@ router.post(
   upload.single("image"),
   analyzeComplaintImage
 );
+
+/* 🤖 CHECK FOR DUPLICATE COMPLAINTS NEARBY (pre-flight, before create) */
+router.post("/check-duplicate", protect, async (req, res) => {
+  try {
+    const { location, description, category } = req.body;
+
+    if (
+      !location ||
+      typeof location.lat !== "number" ||
+      typeof location.lng !== "number"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid location is required",
+      });
+    }
+
+    if (!description || !description.trim()) {
+      return res.json({
+        success: true,
+        data: { isDuplicate: false, candidates: [] },
+      });
+    }
+
+    const { minLat, maxLat, minLng, maxLng } = boundingBox(
+      location.lat,
+      location.lng,
+      DUPLICATE_SEARCH_RADIUS_KM
+    );
+
+    const query = {
+      "location.lat": { $gte: minLat, $lte: maxLat },
+      "location.lng": { $gte: minLng, $lte: maxLng },
+      status: { $nin: EXCLUDED_STATUSES },
+    };
+
+    if (category) {
+      query.category = category;
+    }
+
+    const candidates = await Complaint.find(query).limit(
+      DUPLICATE_CANDIDATE_LIMIT
+    );
+
+    if (candidates.length === 0) {
+      return res.json({
+        success: true,
+        data: { isDuplicate: false, candidates: [] },
+      });
+    }
+
+    let newEmbedding;
+    try {
+      newEmbedding = await embedText(description);
+    } catch (err) {
+      console.error("Duplicate-check embedding failed:", err.message);
+      // Fail open — never block complaint submission on a Gemini outage
+      return res.json({
+        success: true,
+        data: {
+          isDuplicate: false,
+          candidates: [],
+          warning: "duplicate_check_unavailable",
+        },
+      });
+    }
+
+    const scored = [];
+
+    for (const candidate of candidates) {
+      let candidateEmbedding = candidate.descriptionEmbedding;
+      const candidateText = candidate.userDescription || "";
+
+      if (
+        (!candidateEmbedding || candidateEmbedding.length === 0) &&
+        candidateText.trim()
+      ) {
+        try {
+          candidateEmbedding = await embedText(candidateText);
+          candidate.descriptionEmbedding = candidateEmbedding;
+          candidate.embeddingSourceText = candidateText;
+          candidate.embeddingModel = EMBEDDING_MODEL_NAME;
+          await candidate.save();
+        } catch (err) {
+          console.error(
+            `Backfill embedding failed for complaint ${candidate._id}:`,
+            err.message
+          );
+          continue;
+        }
+      }
+
+      if (!candidateEmbedding || candidateEmbedding.length === 0) continue;
+
+      const distanceKm = haversineDistanceKm(
+        location.lat,
+        location.lng,
+        candidate.location.lat,
+        candidate.location.lng
+      );
+
+      if (distanceKm > DUPLICATE_SEARCH_RADIUS_KM) continue;
+
+      const similarity = cosineSimilarity(newEmbedding, candidateEmbedding);
+
+      scored.push({
+        _id: candidate._id,
+        title: candidate.title,
+        address: candidate.address,
+        category: candidate.category,
+        status: candidate.status,
+        upvotes: candidate.upvotes,
+        userDescription: candidate.userDescription,
+        createdAt: candidate.createdAt,
+        distanceKm: Math.round(distanceKm * 1000) / 1000,
+        similarity: Math.round(similarity * 1000) / 1000,
+      });
+    }
+
+    scored.sort((a, b) => b.similarity - a.similarity);
+
+    const bestMatch = scored[0];
+    const isDuplicate =
+      !!bestMatch && bestMatch.similarity >= DUPLICATE_SIMILARITY_THRESHOLD;
+
+    res.json({
+      success: true,
+      data: {
+        isDuplicate,
+        bestMatch: isDuplicate ? bestMatch : null,
+        candidates: scored.slice(0, 5),
+      },
+    });
+  } catch (error) {
+    console.error("DUPLICATE CHECK ERROR:", error);
+    // Fail open at the route level too — never let this pre-flight check
+    // hard-block complaint submission on a bug
+    res.status(200).json({
+      success: true,
+      data: { isDuplicate: false, candidates: [], warning: "duplicate_check_error" },
+    });
+  }
+});
 
 /* 📤 CREATE COMPLAINT */
 router.post(
@@ -142,6 +293,25 @@ router.post(
       }
 
       await complaint.save();
+
+      // 🤖 Cache the embedding for future duplicate-detection candidate
+      // scoring. Best-effort: never block/fail complaint creation if
+      // Gemini is down.
+      if (complaint.userDescription?.trim()) {
+        try {
+          const embedding = await embedText(complaint.userDescription);
+          complaint.descriptionEmbedding = embedding;
+          complaint.embeddingSourceText = complaint.userDescription;
+          complaint.embeddingModel = EMBEDDING_MODEL_NAME;
+          await complaint.save();
+        } catch (err) {
+          console.error(
+            "Embedding computation failed for new complaint:",
+            complaint._id,
+            err.message
+          );
+        }
+      }
 
       // ✅ NOTIFY ADMINS
       const admins = await User.find({ role: "admin" });
