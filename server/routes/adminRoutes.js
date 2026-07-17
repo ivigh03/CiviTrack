@@ -16,6 +16,7 @@ import {
   markAllNotificationsRead,
   clearNotifications,
   markNotificationRead,
+  updateStaffProfile,
 } from "../controllers/adminController.js";
 
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
@@ -64,6 +65,8 @@ router.put(
 );
 
 router.put("/users/:id/role", protect, authorizeRoles("admin"), updateUserRole);
+
+router.put("/users/:id/staff-profile", protect, authorizeRoles("admin"), updateStaffProfile);
 
 router.put("/users/:id/block", protect, authorizeRoles("admin"), toggleUserBlock);
 

@@ -18,6 +18,7 @@ import { broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
 import { logActivity } from "../utils/logActivity.js";
 import { embedText, EMBEDDING_MODEL_NAME } from "../services/geminiService.js";
 import { boundingBox, haversineDistanceKm, cosineSimilarity } from "../utils/similarity.js";
+import { chooseAutoAssignStaff, applyAssignment } from "../services/assignmentService.js";
 
 const router = express.Router();
 
@@ -246,7 +247,7 @@ router.post(
       }
 
       // ✅ Create Complaint
-      const complaint =
+      let complaint =
         new Complaint({
 
           image: req.file
@@ -311,6 +312,26 @@ router.post(
             err.message
           );
         }
+      }
+
+      // 🤖 Smart auto-assignment — best-effort, never blocks complaint
+      // creation. Placed before the admin-notification block below so
+      // admins' real-time feed already shows the correct assignedTo.
+      try {
+        const chosenStaffId = await chooseAutoAssignStaff({ complaint });
+        if (chosenStaffId) {
+          complaint = await applyAssignment({
+            complaintId: complaint._id,
+            staffId: chosenStaffId,
+            assignedBy: null,
+          });
+        }
+      } catch (err) {
+        console.error(
+          "Auto-assignment failed for complaint:",
+          complaint._id,
+          err.message
+        );
       }
 
       // ✅ NOTIFY ADMINS

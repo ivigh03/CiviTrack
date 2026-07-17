@@ -259,7 +259,10 @@ const ComplaintDetail = () => {
             <div className="space-y-1">
               {staffList.map((s) => (
                 <div key={s._id} className="flex items-center justify-between border-b border-border py-3">
-                  <span className="text-foreground">{s.name}</span>
+                  <span className="flex items-center gap-2 text-foreground">
+                    {s.name}
+                    {s.specialization && <Badge variant="info">{s.specialization}</Badge>}
+                  </span>
                   <Button size="sm" variant="secondary" onClick={() => assignStaff(s._id)}>
                     Select
                   </Button>

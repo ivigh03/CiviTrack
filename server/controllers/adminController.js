@@ -6,6 +6,7 @@ import { getIO } from "../socket.js";
 import { applyEscalation } from "../utils/checkEscalation.js";
 import { getDashboardSnapshot, broadcastDashboardUpdate } from "../utils/dashboardSnapshot.js";
 import { logActivity } from "../utils/logActivity.js";
+import { applyAssignment } from "../services/assignmentService.js";
 
 const formatStatusLabel = (status) =>
   status.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -185,116 +186,65 @@ export const markNotificationRead = async (req, res) => {
 
 // 👤 Assign staff
 export const assignStaff = async (req, res) => {
-try {
-const { staffId } = req.body;
+  try {
+    const { staffId } = req.body;
 
-if (!staffId) {
-  return res.status(400).json({
-    message: "Staff ID required",
-  });
-}
+    if (!staffId) {
+      return res.status(400).json({
+        message: "Staff ID required",
+      });
+    }
 
-const complaint = await Complaint.findById(
-  req.params.id
-);
+    const populated = await applyAssignment({
+      complaintId: req.params.id,
+      staffId,
+      assignedBy: req.user?._id || null,
+    });
 
-if (!complaint) {
-  return res.status(404).json({
-    message: "Complaint not found",
-  });
-}
+    res.json(populated);
 
-// Check if first assignment or reassignment
-const action = complaint.assignedTo
-  ? "reassigned"
-  : "assigned";
+  } catch (err) {
+    if (err.message === "COMPLAINT_NOT_FOUND") {
+      return res.status(404).json({
+        message: "Complaint not found",
+      });
+    }
 
-const previousStatus = complaint.status;
+    console.error("========== ASSIGN STAFF ERROR ==========");
+    console.error(err);
+    console.error(err.stack);
+    console.error("=======================================");
 
-const staffUser = await User.findById(staffId).select("name");
-const staffName = staffUser?.name || "staff";
-
-// Update complaint
-complaint.assignedTo = staffId;
-complaint.status = "in-progress";
-
-// Save assignment history
-complaint.assignmentHistory.push({
-  assignedTo: staffId,
-  assignedBy: req.user?._id || null,
-  action,
-  assignedAt: new Date(),
-});
-
-logActivity(complaint, {
-  action:
-    action === "assigned"
-      ? `Assigned to ${staffName}`
-      : `Reassigned to ${staffName}`,
-  performedBy: req.user?._id || null,
-});
-
-if (previousStatus !== "in-progress") {
-  logActivity(complaint, {
-    action: "Status changed to In Progress",
-    performedBy: req.user?._id || null,
-  });
-}
-
-await complaint.save();
-
-// Track complaint in staff profile
-await User.findByIdAndUpdate(
-  staffId,
-  {
-    $addToSet: {
-      assignedComplaints: complaint._id,
-    },
+    res.status(500).json({
+      message: err.message,
+      stack: err.stack,
+    });
   }
-);
-
-const populated = await Complaint.findById(
-  complaint._id
-)
-  .populate("assignedTo")
-  .populate("assignmentHistory.assignedTo")
-  .populate("assignmentHistory.assignedBy")
-  .populate("activityLog.performedBy");
-
-// Notification
-const notification = {
-  message:
-    action === "assigned"
-      ? "Complaint assigned to you"
-      : "Complaint reassigned to you",
-
-  type: "assignment",
-  complaint: complaint._id,
-  user: staffId,
 };
 
-await createNotification(notification);
+// 🧑‍🔧 Update a staff member's auto-assignment profile (specialization,
+// location, availability) — used by the admin UserModal
+export const updateStaffProfile = async (req, res) => {
+  try {
+    const { specialization, location, isAvailable } = req.body;
 
-getIO()
-  .to(staffId.toString())
-  .emit("newNotification", notification);
+    const update = {};
+    if (specialization !== undefined) update.specialization = specialization;
+    if (location !== undefined) update.location = location;
+    if (isAvailable !== undefined) update.isAvailable = isAvailable;
 
-getIO().to("admins").emit("complaint:updated", populated);
-await broadcastDashboardUpdate();
+    const user = await User.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    }).select("-password");
 
-res.json(populated);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-} catch (err) {
-  console.error("========== ASSIGN STAFF ERROR ==========");
-  console.error(err);
-  console.error(err.stack);
-  console.error("=======================================");
-
-  res.status(500).json({
-    message: err.message,
-    stack: err.stack,
-  });
-}
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 
